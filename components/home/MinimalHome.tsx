@@ -192,7 +192,24 @@ function SurahStrip({
   );
 }
 
-export default function MinimalHome({ initialQuery = "" }: { initialQuery?: string }) {
+/**
+ * `children` is the crawlable tail — the page's prose and the site's internal
+ * link map, handed in from the server page.
+ *
+ * It has to render INSIDE `.mhome`, not after it. `.mhome` is
+ * `position: fixed; inset: 0` with its own `overflow-y: auto`, so anything
+ * following it in the document sits underneath a full-viewport overlay: laid
+ * out at y=0 and never reachable by scrolling. Text a reader cannot reach is
+ * cloaking — a worse problem than the thin page it would be fixing. Inside
+ * this container it scrolls with everything else and is just the page's end.
+ */
+export default function MinimalHome({
+  initialQuery = "",
+  children,
+}: {
+  initialQuery?: string;
+  children?: React.ReactNode;
+}) {
   const t = useTranslations("Home");
   const tFooter = useTranslations("Footer");
   const params = useParams();
@@ -879,6 +896,8 @@ export default function MinimalHome({ initialQuery = "" }: { initialQuery?: stri
           )}
         </div>
       </div>
+
+      {children}
 
       <style jsx>{styles}</style>
     </div>
