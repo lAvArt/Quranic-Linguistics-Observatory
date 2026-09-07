@@ -6,6 +6,7 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '../../i18n/routing';
 import { Footer } from "@/components/ui/Footer";
+import { SiteNavMap } from "@/components/seo/SiteNavMap";
 import { SITE_URL, SITE_NAME, languageAlternates } from "@/lib/seo/site";
 
 function isRoutingLocale(locale: string): locale is (typeof routing.locales)[number] {
@@ -121,6 +122,14 @@ export default async function RootLayout({
         <Providers>
           <div dir={direction} lang={locale} className="locale-shell">
             {children}
+            {/*
+              Server-rendered internal links, outside <Footer /> on purpose.
+              The footer is a client component whose anchors are all external,
+              so the HTML a crawler receives carried no in-site links at all —
+              and `.mhome-active .site-footer { display: none }` hides the
+              footer on the immersive home, the page whose links matter most.
+            */}
+            <SiteNavMap locale={locale} />
             <Footer />
           </div>
         </Providers>

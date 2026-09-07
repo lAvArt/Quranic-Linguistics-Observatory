@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import SearchWorkspace from "@/components/search/SearchWorkspace";
+import { PageAbout } from "@/components/seo/PageAbout";
 import { buildExploreOverviewPayload } from "@/lib/corpus/overviewData";
 import { SITE_URL, languageAlternates } from "@/lib/seo/site";
 
@@ -17,8 +18,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default function SearchPage() {
+export default async function SearchPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const initialCorpusData = buildExploreOverviewPayload();
 
-  return <SearchWorkspace initialCorpusData={initialCorpusData} />;
+  return (
+    <>
+      <SearchWorkspace initialCorpusData={initialCorpusData} />
+      <PageAbout page="search" locale={locale} />
+    </>
+  );
 }

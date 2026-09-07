@@ -1647,5 +1647,36 @@
         "whatItShows": "What it shows",
         "whatItIsFor": "What it is for",
         "openLive": "Open the interactive {title}"
+    },
+    "SiteNav": {
+        "heading": "Explore",
+        "graphs": "Visualizations",
+        "blurb": "Free and open source. Morphology from the Quranic Arabic Corpus.",
+        "home": "Home",
+        "search": "Corpus search",
+        "study": "Study Hub",
+        "quiz": "Quizzes"
+    },
+    "PageAbout": {
+        "home": {
+            "heading": "About the Observatory",
+            "p1": "The Quranic Linguistics Observatory reads the Quran as a linguistic structure. Its morphology comes from the Quranic Arabic Corpus compiled by Kais Dukes at the University of Leeds: 128,219 annotated segments, collapsing to 77,429 word-level tokens across 114 suras and 6,236 ayahs, each tagged with its triliteral root, its lemma, its part of speech and its grammatical features.",
+            "p2": "Most corpus tools present that as a table. This one draws it. A root fans out into every lemma and surface form derived from it, a sura becomes a ring of its own vocabulary, and the relations between them are paths you follow rather than queries you compose."
+        },
+        "search": {
+            "heading": "About corpus search",
+            "p1": "Search runs across all 77,429 word-level tokens, and it searches the structure rather than the letters. Ask for a root and you get every word derived from it anywhere in the text, whatever prefixes and suffixes it carries in context; ask for a lemma and you get its inflected forms.",
+            "p2": "Arabic input is normalised before matching, so a query typed without diacritics still finds the vocalised text, and the variant forms of alif, ya and ta marbuta are treated as one. Results narrow by part of speech and by morphological feature, and any hit opens in the morphology inspector with its full segment breakdown."
+        },
+        "study": {
+            "heading": "About the Study Hub",
+            "p1": "The Study Hub keeps track of the roots you are working on. Mark a root while exploring and it joins a list here, with what you have already seen of it, when you last met it, and how much of its family across the corpus you have covered.",
+            "p2": "Progress is saved to your account when you are signed in and kept in the browser when you are not, and it can be exported to a file and imported back. Nothing about what you read is published or shared."
+        },
+        "quiz": {
+            "heading": "About the quizzes",
+            "p1": "Quizzes are generated from the corpus itself rather than drawn from a fixed question bank. Each one is built from the roots and morphology of real Quranic text, so the words you are asked about are words that genuinely occur, in the forms they genuinely take.",
+            "p2": "You can work across the whole corpus or narrow to a single root you are studying. Results feed back into the Study Hub, so the roots you keep getting wrong come round again."
+        }
     }
 }

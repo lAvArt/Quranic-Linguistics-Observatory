@@ -8,6 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
+- Server-rendered prose on the four main pages (`PageAbout`) and a
+  server-rendered internal link map on every page (`SiteNavMap`), both locales.
+  Measured against production, the rendered HTML carried almost nothing for a
+  crawler: `/study` emitted **14 words** — "Your Profile Loading…", because
+  `StudyHub` is a client component that returns a loading state until auth
+  resolves — the home 37, and **no page carried a single internal link**, the
+  footer's anchors all being external. Search Console answered with nine URLs
+  in "Discovered — currently not indexed" and three in "Crawled — currently
+  not indexed": twelve of a sixteen-URL sitemap. The worked pages now render
+  101–391 words and seven in-site links each, including the first inbound
+  links the `/viz/*` gallery pages have ever had.
 - Correlation search (الجوار): a collocation panel in the Search workspace with
   salience-ranked neighbours, names-only filter, window controls (same ayah /
   ±5 / ±10 words), exact-form vs word-family anchoring, and inline ayah
