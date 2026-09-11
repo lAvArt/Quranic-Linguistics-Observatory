@@ -98,7 +98,7 @@
     "wait-on": "^9.1.0"
   },
   "overrides": {
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "postcss": "^8.5.22",
     "esbuild": "^0.28.1"
   }
