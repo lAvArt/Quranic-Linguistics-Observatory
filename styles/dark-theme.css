@@ -34,11 +34,10 @@
 }
 
 [data-theme="dark"] body {
-  background:
-    radial-gradient(ellipse at 16% 24%, rgba(232, 146, 74, 0.1), transparent 52%),
-    radial-gradient(ellipse at 84% 70%, rgba(86, 166, 151, 0.08), transparent 52%),
-    radial-gradient(ellipse at 50% 120%, rgba(142, 132, 204, 0.06), transparent 55%),
-    var(--bg-0);
+  /* Flat slate. Two accent ellipses used to sit here — amber at 16% 24% and
+     teal at 84% 70% — which read as a warm band down one edge and a green
+     cast down the other. */
+  background: var(--bg-0);
   color: var(--ink);
 }
 
