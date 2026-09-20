@@ -17,6 +17,7 @@ Example deep links: `/en?viz=radial-sura&surah=2`, `/en?viz=collocation-network&
 (URL-encode Arabic in scripts). Root params are corpus root keys — plain-alif forms,
 see `docs/DATA_SOURCES.md` and the hamza-normalization note in `lib/corpus`.
 
+| Root frequency | `/{locale}/frequency` | Not a viz mode and not on the rail — a standalone read-only page, linked from the landing page's "Did you know" line. `app/[locale]/frequency/page.tsx` → `components/frequency/RootFrequencyView.tsx` (Server Component) + `FrequencyCharts.tsx` (client, hover only). Data: `public/data/root-frequency.json`, imported at build, never shipped to the client. The Top-N / page control is CSS-only — hidden radios plus `:has()`, rows carrying a `.fq-r<tier>` and a `.fq-p<page>` class. |
 | Search workspace | `/{locale}/search?q={query}` | `q` may carry the `near:`/`قرب:` operator (`?q=أب قرب:ابراهيم`) — the الجوار
 panel then renders pair mode with every co-occurrence window. The home pair card's "see all results" CTA deep-links here. |
 

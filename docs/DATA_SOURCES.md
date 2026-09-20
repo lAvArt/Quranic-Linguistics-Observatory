@@ -40,6 +40,23 @@ Derived analytics include:
 - vector semantic search
 - PMI-based collocation scores
 
+### Precomputed files under `public/data/`
+
+Built from the bundled QAC morphology file by scripts in `scripts/`, committed, and
+read at build time. They are derived straight from the morphology source, so they do
+**not** inherit the word-alignment drift that affects database-backed views.
+
+| File | Built by | Used by |
+| --- | --- | --- |
+| `root-stats.json` | `npm run data:roots` | Landing page search and "today's root" |
+| `root-frequency.json` | `npm run data:root-dist` | `/frequency` — tiers, leaderboard, coverage, charts |
+| `name-stats.json` | `npm run data:names` | Proper-noun search |
+| `form-index.json` | `npm run data:forms` | Surface-form lookup |
+| `lemma-form-stats.json` | `npm run data:lemma-form` | Root → word → form drill-down |
+
+`npm run data:root-dist` also regenerates `docs/ROOT-GLOSS-GAPS.md`, the worklist of
+roots still missing an English gloss. Do not hand-edit either output.
+
 ## Search and AI-Assisted Helpers
 
 Some product utilities may use model-backed helpers such as semantic search or image-assisted root extraction. These are convenience layers over canonical corpus data, not new source-of-truth content.
