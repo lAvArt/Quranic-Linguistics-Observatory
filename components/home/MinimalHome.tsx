@@ -1893,7 +1893,6 @@ const styles = `
     --mh-cta-ink: #2A1606;
     --mh-count-glow: rgba(251, 234, 210, 0.22);
     --mh-shadow-strong: rgba(0, 0, 0, 0.45);
-    --mh-atmos-2: rgba(142, 132, 204, 0.05);
 
     position: fixed;
     inset: 0;
@@ -1934,7 +1933,6 @@ const styles = `
     --mh-cta-ink: #FFFFFF;
     --mh-count-glow: rgba(181, 87, 31, 0.14);
     --mh-shadow-strong: rgba(31, 28, 25, 0.14);
-    --mh-atmos-2: rgba(142, 132, 204, 0.07);
   }
   /* Root/POS "data colors" (rootColor()/POS_COLOR) are tuned for the dark
      slate-teal canvas and fall below text contrast on parchment (e.g. amber
@@ -1960,9 +1958,10 @@ const styles = `
     position: absolute;
     inset: 0;
     pointer-events: none;
+    /* Single centred breath. The second radial at 50% 102% put a glow under
+       the fold that read as a smear along the bottom edge. */
     background:
-      radial-gradient(50% 56% at 50% 44%, rgba(var(--mh-accent-rgb), 0.06), transparent 60%),
-      radial-gradient(44% 50% at 50% 102%, var(--mh-atmos-2), transparent 60%);
+      radial-gradient(50% 56% at 50% 44%, rgba(var(--mh-accent-rgb), 0.06), transparent 60%);
     transition: background 0.5s ease;
   }
   .mhome.has-result .mhome-atmos {

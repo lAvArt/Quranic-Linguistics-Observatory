@@ -213,11 +213,12 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  background:
-    radial-gradient(circle at 12% 16%, rgba(15, 118, 110, 0.16), transparent 40%),
-    radial-gradient(circle at 82% 12%, rgba(245, 158, 11, 0.2), transparent 35%),
-    radial-gradient(circle at 50% 120%, rgba(29, 78, 216, 0.1), transparent 42%),
-    linear-gradient(160deg, var(--bg-0), var(--bg-1));
+  /* Plain parchment. The previous version layered a 16% teal radial top-left,
+     a 20% amber radial top-right and a 10% blue radial at 50% 120%; over the
+     warm --bg-0/--bg-1 base those mixed to an olive-khaki wash with a muddy
+     glow bleeding up from the bottom edge. No coloured light on the canvas —
+     accent colour belongs to the data, not the backdrop. */
+  background: linear-gradient(180deg, var(--bg-0), var(--bg-1));
 }
 
 .body-root {
@@ -258,11 +259,14 @@ body {
   /* Observatory atmosphere: near-black slate with FAINT accent breathing —
      the previous 50%-alpha --accent-glow radials read as giant low-res
      orange/teal blobs behind the auth card. Fixed-px radii so the glows
-     don't balloon on wide viewports. */
+     don't balloon on wide viewports.
+
+     A third radial used to sit under these two at 50% 118%: a 1300px glow
+     anchored below the viewport, which read as a bright smear across the
+     bottom of every page, behind all content. Removed. */
   background:
-    radial-gradient(1100px circle at 16% 10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 62%),
-    radial-gradient(900px circle at 86% 16%, color-mix(in srgb, var(--accent-2) 6%, transparent), transparent 58%),
-    radial-gradient(1300px circle at 50% 118%, color-mix(in srgb, var(--accent-3) 5%, transparent), transparent 55%);
+    radial-gradient(1100px circle at 16% 10%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 62%),
+    radial-gradient(900px circle at 86% 16%, color-mix(in srgb, var(--accent-2) 4%, transparent), transparent 58%);
   pointer-events: none;
 }
 

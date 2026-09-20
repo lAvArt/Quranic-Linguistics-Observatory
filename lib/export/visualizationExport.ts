@@ -179,7 +179,7 @@ function resolveFullGraphFrame(svg: SVGSVGElement, padding: number): SvgFrame | 
   const graphics = Array.from(svg.querySelectorAll<SVGGraphicsElement>(GRAPHICS_SELECTOR));
   if (graphics.length === 0) return null;
 
-  let rootInverseCtm: DOMMatrix | null = null;
+  let rootInverseCtm: DOMMatrix | null;
   try {
     const rootCtm = svg.getCTM();
     rootInverseCtm = rootCtm ? rootCtm.inverse() : null;
