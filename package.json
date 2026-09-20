@@ -49,6 +49,7 @@
     "i18n:pseudo": "node scripts/pseudo-localize.js",
     "fetch:morphology": "node scripts/fetch-morphology.js",
     "data:roots": "tsx scripts/build-root-stats.ts",
+    "data:root-dist": "tsx scripts/analyze-root-distribution.ts",
     "data:names": "tsx scripts/build-name-stats.ts",
     "data:forms": "tsx scripts/build-form-index.ts",
     "audit:search": "tsx scripts/audit-search-coverage.ts",

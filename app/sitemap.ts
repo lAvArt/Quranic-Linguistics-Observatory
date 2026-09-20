@@ -7,6 +7,7 @@ const PAGES = [
     { path: '/search',       changeFrequency: 'weekly'  as const, priority: 0.9 },
     { path: '/study',        changeFrequency: 'weekly'  as const, priority: 0.8 },
     { path: '/quiz',         changeFrequency: 'weekly'  as const, priority: 0.7 },
+    { path: '/frequency',    changeFrequency: 'monthly' as const, priority: 0.8 },
     { path: '/auth/login',   changeFrequency: 'monthly' as const, priority: 0.3 },
 ];
 

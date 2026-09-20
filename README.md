@@ -305,6 +305,8 @@ docs/                Product, schema, roadmap, and release documentation
 - [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)
 - [docs/EMBEDDING.md](docs/EMBEDDING.md)
 - [docs/ROADMAP.md](docs/ROADMAP.md)
+- [docs/ROOT-GLOSS-GAPS.md](docs/ROOT-GLOSS-GAPS.md) — generated worklist of roots
+  still missing an English gloss, ranked by share of the text (`npm run data:root-dist`)
 
 ## Attribution
 
