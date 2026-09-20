@@ -141,6 +141,24 @@ The landing page is the search box. Type, and the answer resolves as you go:
 - Semantic and collocation queries through Supabase/PostgreSQL functions
 - Optional image-assisted root extraction and OCR-assisted utilities for search entry
 
+### Root frequency
+
+A dedicated `/frequency` page answers "how often does each root appear?" — reached
+from a quiet **Did you know** line on the landing page, which opens it in its own
+tab so the search you were running is not lost.
+
+- Five frequency tiers — Most frequent (ranks 1–10) through Fifth tier (251–500) —
+  with the words and share of the text each tier carries
+- A leaderboard of the 500 most frequent roots: cumulative `Top 10` / `Top 50` /
+  `Top 100`, then pages of a hundred. The control is CSS-only (hidden radios plus
+  `:has()`), so the table costs no client JavaScript
+- A coverage ladder: the 10 most frequent roots carry 21.9% of all root-bearing
+  words, the top 100 carry 60.5%, the top 500 carry 91.7%
+- Three charts, each reading out root, gloss and counts on hover — rank against
+  occurrences, roots against words by frequency band, and occurrences against how
+  many of the 114 sūrahs a root reaches
+- Descriptive by design: the page states what the counts are and stops there
+
 ### Study and learning
 
 - Tracked roots with learning and learned states, notes, import/export, and migration flows
@@ -240,6 +258,7 @@ The landing page is the search box. Type, and the answer resolves as you go:
 | `npm run i18n:check` | Check translation coverage |
 | `npm run i18n:pseudo` | Regenerate pseudo-localized messages |
 | `npm run docs:generate` | Regenerate screenshot-backed docs assets |
+| `npm run data:root-dist` | Rebuild `/frequency` data and the gloss-gap worklist |
 
 ## Tech Stack
 
@@ -260,6 +279,7 @@ components/
   auth/              Auth forms and flows
   onboarding/        First-run mission and onboarding UI
   quiz/              Quiz cards, daily puzzle, and review quiz surfaces
+  frequency/         Root-frequency page and its hover-readable charts
   search/            Search workspace and command/search UI
   shell/             Shared app shell, journey rail, and shell navigation
   study/             Study hub and related dashboard components
@@ -305,6 +325,9 @@ docs/                Product, schema, roadmap, and release documentation
 - [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)
 - [docs/EMBEDDING.md](docs/EMBEDDING.md)
 - [docs/ROADMAP.md](docs/ROADMAP.md)
+- [docs/VIZ_ARCHITECTURE.md](docs/VIZ_ARCHITECTURE.md)
+- [docs/ROOT-GLOSS-GAPS.md](docs/ROOT-GLOSS-GAPS.md) — generated worklist of roots
+  still missing an English gloss, ranked by share of the text (`npm run data:root-dist`)
 
 ## Attribution
 

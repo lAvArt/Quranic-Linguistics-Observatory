@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import { AuthButton } from "@/components/ui/AuthButton";
 import { SURAH_NAMES } from "@/lib/data/surahData";
-import { ROOT_GLOSSES_AR } from "@/lib/data/rootGlossesAr";
+import { resolveGloss, type ResolvedGloss } from "@/lib/data/rootGloss";
 import {
   loadRootStats,
   lookupRoot,
@@ -72,29 +72,6 @@ const POS_COLOR: Record<string, string> = {
   P: "#E6C24E",
 };
 const rootColor = (s: RootStat): string => POS_COLOR[s.pos?.[0]?.[0] ?? "N"] ?? "#E8924A";
-
-interface ResolvedGloss {
-  text: string;
-  /** True when `text` is a curated Arabic sense (renders rtl); false when
-   *  it's the corpus's English gloss (renders ltr, as it always has). */
-  isAr: boolean;
-}
-
-/**
- * Resolve a root's display gloss. In the `ar` locale, prefer the curated
- * classical Arabic sense (`lib/data/rootGlossesAr.ts`, corpus data — not
- * i18n copy) over the English corpus gloss, so the landing page reads as
- * Arabic rather than mixing in ltr English fragments. Roots outside that
- * curated 48-root set — and every root in non-`ar` locales — keep falling
- * back to the plain English gloss, exactly as before.
- */
-function resolveGloss(locale: string, bare: string, englishGloss: string | null | undefined): ResolvedGloss | null {
-  if (locale === "ar") {
-    const ar = ROOT_GLOSSES_AR[bare];
-    if (ar) return { text: ar, isAr: true };
-  }
-  return englishGloss ? { text: englishGloss, isAr: false } : null;
-}
 
 /** Locale-aware sūrah name — Arabic script in `ar`, transliteration otherwise. */
 function useSurahName() {
@@ -892,6 +869,20 @@ export default function MinimalHome({
                   )}
                 </section>
               )}
+
+              {/* A single observation, and the way into the full ranking.
+                  Opens in its own tab so the landing keeps whatever the
+                  visitor has already searched. */}
+              <a
+                className="mhome-dyk"
+                href={`/${locale}/frequency`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="mhome-dyk-kicker">{t("didYouKnowKicker")}</span>
+                <span className="mhome-dyk-body">{t("didYouKnowBody")}</span>
+                <span className="mhome-dyk-cta">{t("didYouKnowLink")}</span>
+              </a>
             </div>
           )}
         </div>
@@ -2080,6 +2071,42 @@ const styles = `
 
   /* resting */
   .mhome-resting { display: flex; flex-direction: column; align-items: stretch; gap: 30px; animation: mhfade 0.4s ease; }
+
+  /* "Did you know" — one observation, linking out to /frequency. Deliberately
+     quiet: a rule, a kicker and a line, no card chrome competing with the
+     today's-root masthead above it. */
+  .mhome-dyk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 14px;
+    padding-block-start: 18px;
+    /* Separates it from the crawlable prose tail rendered directly below,
+       inside the same scroll container. (No backticks in this block: the
+       whole stylesheet is one template literal.) */
+    margin-block-end: 34px;
+    border-block-start: 1px solid rgba(var(--mh-ink-rgb), 0.12);
+    text-decoration: none;
+    color: inherit;
+  }
+  .mhome-dyk-kicker {
+    font: 600 10px 'Space Grotesk', sans-serif;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(var(--mh-ink-rgb), 0.5);
+  }
+  .mhome-dyk-body { font: 400 14px 'Space Grotesk', sans-serif; color: var(--mh-ink-72); flex: 1 1 16rem; }
+  .mhome-dyk-cta {
+    font: 500 12px 'Space Grotesk', sans-serif;
+    color: var(--mh-accent);
+    border-block-end: 1px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+  .mhome-dyk:hover .mhome-dyk-cta { border-block-end-color: var(--mh-accent); }
+  .mhome-dyk:focus-visible { outline: 2px solid var(--mh-accent); outline-offset: 4px; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    .mhome-dyk-cta { transition: none; }
+  }
 
   .mhome-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px; }
   .mhome-chip {

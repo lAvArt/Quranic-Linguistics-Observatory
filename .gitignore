@@ -38,3 +38,7 @@ public/data/root-meanings.json
 # Video captures (intro/tutorial recordings) — never commit media
 *.webm
 *.mp4
+
+# Local-only prototypes served by next dev — never shipped.
+# Under public/data/ because proxy.ts exempts only /data from locale rewriting.
+public/data/_local/
