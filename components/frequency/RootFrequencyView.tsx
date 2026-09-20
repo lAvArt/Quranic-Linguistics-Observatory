@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import AppWorkspaceShell from "@/components/ui/AppWorkspaceShell";
 import { resolveGloss } from "@/lib/data/rootGloss";
 import { ROOT_FREQUENCY, tierOf, type RootFrequencyReport } from "@/lib/data/rootFrequency";
+import { BandsChart, RankChart, ReachChart } from "@/components/frequency/FrequencyCharts";
 
 /**
  * The root-frequency page: what the corpus counts say, and nothing about why.
@@ -45,6 +46,23 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
     return { page, lo: (page - 1) * PAGE_SIZE + 1, hi: Math.min(page * PAGE_SIZE, d.leaderboard.length) };
   });
   const pageOf = (rank: number) => Math.ceil(rank / PAGE_SIZE);
+
+  // Charts are client components for hover; hand them only the columns they
+  // plot, with the gloss already resolved for this locale.
+  const rankPoints = d.leaderboard.map((r) => ({
+    r: r.rank,
+    c: r.count,
+    b: r.bare,
+    g: resolveGloss(locale, r.bare, r.gloss)?.text ?? null,
+  }));
+  const reachPoints = d.scatter.map((r) => ({
+    b: r.bare,
+    c: r.count,
+    s: r.surahs,
+    t: r.topShare,
+    u: r.topSura,
+    g: resolveGloss(locale, r.bare, r.gloss)?.text ?? null,
+  }));
 
   return (
     <AppWorkspaceShell
@@ -223,9 +241,7 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
         <h2 className="fq-h2" id="fq-curve">{t("curveHeading")}</h2>
         <p className="fq-lede">{t("curveLede")}</p>
         <div className="fq-card">
-          <div className="fq-chart" dir={CHART_DIR}>
-            <RankChart rows={d.leaderboard} label={t("curveAlt")} axis={t("curveAxis")} fmt={n} />
-          </div>
+          <RankChart points={rankPoints} label={t("curveAlt")} axis={t("curveAxis")} />
         </div>
       </section>
 
@@ -234,16 +250,13 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
         <h2 className="fq-h2" id="fq-bands">{t("bandsHeading")}</h2>
         <p className="fq-lede">{t("bandsLede")}</p>
         <div className="fq-card">
-          <div className="fq-chart" dir={CHART_DIR}>
-            <BandsChart
-              buckets={d.buckets}
-              totals={d.totals}
-              label={t("bandsAlt")}
-              axis={t("bandsAxis")}
-              fmt={n}
-              pctFmt={pct}
-            />
-          </div>
+          <BandsChart
+            buckets={d.buckets}
+            totalRoots={d.totals.roots}
+            totalWords={d.totals.words}
+            label={t("bandsAlt")}
+            axis={t("bandsAxis")}
+          />
           <ul className="fq-legend">
             <li><i className="fq-swatch fq-swatch--alt" />{t("legendRoots")}</li>
             <li><i className="fq-swatch fq-swatch--accent" />{t("legendWords")}</li>
@@ -307,9 +320,7 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
         <h2 className="fq-h2" id="fq-reach">{t("reachHeading")}</h2>
         <p className="fq-lede">{t("reachLede")}</p>
         <div className="fq-card">
-          <div className="fq-chart" dir={CHART_DIR}>
-            <ReachChart points={d.scatter} peak={peak} label={t("reachAlt")} axis={t("reachAxis")} fmt={n} />
-          </div>
+          <ReachChart points={reachPoints} peak={peak} label={t("reachAlt")} axis={t("reachAxis")} />
           <ul className="fq-legend">
             <li><i className="fq-swatch fq-swatch--alt" />{t("legendSpread")}</li>
             <li><i className="fq-swatch fq-swatch--accent" />{t("legendConcentrated")}</li>
@@ -323,163 +334,5 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
           same attribution twice within one screen. */}
       <p className="fq-source">{t("source")}</p>
     </AppWorkspaceShell>
-  );
-}
-
-/* ─── Charts ──────────────────────────────────────────────────────────────
-   Static inline SVG. Every mark carries a <title> so the values are
-   reachable by pointer and by screen reader without any client JS. */
-
-const W = 720;
-
-function RankChart({
-  rows,
-  label,
-  axis,
-  fmt,
-}: {
-  rows: RootFrequencyReport["leaderboard"];
-  label: string;
-  axis: string;
-  fmt: (v: number) => string;
-}) {
-  const H = 360;
-  const m = { t: 16, r: 16, b: 40, l: 54 };
-  const maxRank = Math.log10(rows.length);
-  const maxCount = Math.log10(rows[0].count);
-  const x = (rank: number) => m.l + (Math.log10(rank) / maxRank) * (W - m.l - m.r);
-  const y = (count: number) => H - m.b - (Math.log10(count) / maxCount) * (H - m.t - m.b);
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className="fq-svg">
-      <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} className="fq-axis" />
-      <line x1={m.l} y1={m.t} x2={m.l} y2={H - m.b} className="fq-axis" />
-      {[1, 10, 100, 500].map((v) => (
-        <g key={v} className="fq-tick">
-          <line x1={x(v)} y1={H - m.b} x2={x(v)} y2={H - m.b + 5} />
-          <text x={x(v)} y={H - m.b + 18} textAnchor="middle">{fmt(v)}</text>
-        </g>
-      ))}
-      {[10, 100, 1000].map((v) => (
-        <g key={v} className="fq-tick">
-          <line x1={m.l - 5} y1={y(v)} x2={m.l} y2={y(v)} />
-          <text x={m.l - 9} y={y(v) + 4} textAnchor="end">{fmt(v)}</text>
-        </g>
-      ))}
-      {rows.map((r) => (
-        <circle key={r.bare} cx={x(r.rank).toFixed(1)} cy={y(r.count).toFixed(1)} r={1.7} className="fq-dot">
-          <title>{`${r.bare} — #${fmt(r.rank)} · ${fmt(r.count)}`}</title>
-        </circle>
-      ))}
-      <text x={W / 2} y={H - 4} textAnchor="middle" className="fq-axis-label">{axis}</text>
-    </svg>
-  );
-}
-
-function BandsChart({
-  buckets,
-  totals,
-  label,
-  axis,
-  fmt,
-  pctFmt,
-}: {
-  buckets: RootFrequencyReport["buckets"];
-  totals: RootFrequencyReport["totals"];
-  label: string;
-  axis: string;
-  fmt: (v: number) => string;
-  pctFmt: (v: number, d?: number) => string;
-}) {
-  const H = 264;
-  const m = { t: 14, r: 14, b: 48, l: 48 };
-  const max = Math.max(...buckets.map((b) => Math.max(b.roots / totals.roots, b.words / totals.words)));
-  const slot = (W - m.l - m.r) / buckets.length;
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className="fq-svg">
-      <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} className="fq-axis" />
-      {buckets.map((b, i) => {
-        const left = m.l + i * slot;
-        const hRoots = ((b.roots / totals.roots) / max) * (H - m.t - m.b);
-        const hWords = ((b.words / totals.words) / max) * (H - m.t - m.b);
-        const tick = b.hi === null ? `${fmt(b.lo)}+` : b.lo === b.hi ? fmt(b.lo) : `${fmt(b.lo)}–${fmt(b.hi)}`;
-        return (
-          <g key={b.lo}>
-            <rect
-              x={(left + slot * 0.12).toFixed(1)}
-              y={(H - m.b - hRoots).toFixed(1)}
-              width={(slot * 0.34).toFixed(1)}
-              height={hRoots.toFixed(1)}
-              className="fq-bar-alt"
-            />
-            <rect
-              x={(left + slot * 0.5).toFixed(1)}
-              y={(H - m.b - hWords).toFixed(1)}
-              width={(slot * 0.34).toFixed(1)}
-              height={hWords.toFixed(1)}
-              className="fq-bar-accent"
-            />
-            <text x={(left + slot / 2).toFixed(1)} y={H - m.b + 16} textAnchor="middle" className="fq-tick-sm">
-              {tick}
-            </text>
-            <title>{`${tick} · ${fmt(b.roots)} / ${pctFmt(b.roots / totals.roots)} · ${fmt(b.words)} / ${pctFmt(b.words / totals.words)}`}</title>
-          </g>
-        );
-      })}
-      <text x={W / 2} y={H - 6} textAnchor="middle" className="fq-axis-label">{axis}</text>
-    </svg>
-  );
-}
-
-function ReachChart({
-  points,
-  peak,
-  label,
-  axis,
-  fmt,
-}: {
-  points: RootFrequencyReport["scatter"];
-  peak: number;
-  label: string;
-  axis: string;
-  fmt: (v: number) => string;
-}) {
-  const H = 340;
-  const m = { t: 16, r: 16, b: 44, l: 54 };
-  const lo = Math.log10(20);
-  const hi = Math.log10(peak);
-  const x = (count: number) => m.l + ((Math.log10(count) - lo) / (hi - lo)) * (W - m.l - m.r);
-  const y = (surahs: number) => H - m.b - (surahs / 114) * (H - m.t - m.b);
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className="fq-svg">
-      <line x1={m.l} y1={H - m.b} x2={W - m.r} y2={H - m.b} className="fq-axis" />
-      <line x1={m.l} y1={m.t} x2={m.l} y2={H - m.b} className="fq-axis" />
-      {[20, 50, 100, 300, 1000, peak].map((v) => (
-        <g key={v} className="fq-tick">
-          <line x1={x(v)} y1={H - m.b} x2={x(v)} y2={H - m.b + 5} />
-          <text x={x(v)} y={H - m.b + 18} textAnchor="middle">{fmt(v)}</text>
-        </g>
-      ))}
-      {[0, 30, 60, 90, 114].map((v) => (
-        <g key={v} className="fq-tick">
-          <line x1={m.l - 5} y1={y(v)} x2={m.l} y2={y(v)} />
-          <text x={m.l - 9} y={y(v) + 4} textAnchor="end">{fmt(v)}</text>
-        </g>
-      ))}
-      {points.map((p) => (
-        <circle
-          key={p.bare}
-          cx={x(p.count).toFixed(1)}
-          cy={y(p.surahs).toFixed(1)}
-          r={(2 + Math.min(4, p.count / 250)).toFixed(1)}
-          className={p.topShare > 0.15 ? "fq-dot fq-dot--concentrated" : "fq-dot"}
-        >
-          <title>{`${p.bare} — ${fmt(p.count)} · ${fmt(p.surahs)}`}</title>
-        </circle>
-      ))}
-      <text x={W / 2} y={H - 4} textAnchor="middle" className="fq-axis-label">{axis}</text>
-    </svg>
   );
 }

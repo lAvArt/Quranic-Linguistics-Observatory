@@ -151,7 +151,14 @@
         "legendConcentrated": "over 15% in one sūrah",
         "times": "{n}×",
         "source": "Counts are root-bearing words — one per written word carrying a root tag — so particles and proper nouns without a root are not counted.",
-        "pageRange": "{lo}–{hi}"
+        "pageRange": "{lo}–{hi}",
+        "tipRank": "Rank {n}",
+        "tipOccurrences": "{n} occurrences",
+        "tipSurahs": "in {n} sūrahs",
+        "tipBand": "{range} occurrences",
+        "tipRoots": "{n} roots · {share}",
+        "tipWords": "{n} words · {share}",
+        "tipInSurah": "{share} of them in sūrah {n}"
     },
     "Error": {
         "title": "Something went wrong",

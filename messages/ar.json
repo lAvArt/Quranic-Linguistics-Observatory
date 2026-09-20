@@ -151,7 +151,14 @@
         "legendConcentrated": "أكثر من 15٪ في سورة واحدة",
         "times": "{n}×",
         "source": "الأعداد هي الكلمات ذات الجذور — كلمة واحدة لكل كلمة مكتوبة تحمل وسم جذر — فلا تُحسب الحروف وأسماء الأعلام التي لا جذر لها.",
-        "pageRange": "{lo}–{hi}"
+        "pageRange": "{lo}–{hi}",
+        "tipRank": "المرتبة {n}",
+        "tipOccurrences": "{n} ورود",
+        "tipSurahs": "في {n} سورة",
+        "tipBand": "{range} ورود",
+        "tipRoots": "{n} جذر · {share}",
+        "tipWords": "{n} كلمة · {share}",
+        "tipInSurah": "{share} منها في سورة {n}"
     },
     "Error": {
         "title": "حدث خطأ ما",
