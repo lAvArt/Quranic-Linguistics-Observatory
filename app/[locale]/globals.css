@@ -256,17 +256,15 @@ body {
 .ui-shell-backdrop {
   position: fixed;
   inset: 0;
-  /* Observatory atmosphere: near-black slate with FAINT accent breathing —
-     the previous 50%-alpha --accent-glow radials read as giant low-res
-     orange/teal blobs behind the auth card. Fixed-px radii so the glows
-     don't balloon on wide viewports.
+  /* Paints nothing by default — the canvas is the flat --bg-0/--bg-1 on
+     `body`. It stays as a positioned layer because the search and study
+     shells below give it their own opaque backdrop.
 
-     A third radial used to sit under these two at 50% 118%: a 1300px glow
-     anchored below the viewport, which read as a bright smear across the
-     bottom of every page, behind all content. Removed. */
-  background:
-    radial-gradient(1100px circle at 16% 10%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 62%),
-    radial-gradient(900px circle at 86% 16%, color-mix(in srgb, var(--accent-2) 4%, transparent), transparent 58%);
+     It used to carry three accent radials: two at the top and a 1300px one
+     at 50% 118%, anchored under the viewport. Stacked with `body` and
+     .ui-workspace-atmosphere, they put a coloured glow around the edge of
+     every page. Do not reintroduce one here — accent colour belongs to the
+     data, not the canvas. */
   pointer-events: none;
 }
 
@@ -467,13 +465,6 @@ body {
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(circle at center, black 18%, transparent 86%);
-}
-
-.ui-workspace-shell-default .ui-workspace-atmosphere {
-  background:
-    radial-gradient(circle at 14% 20%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 38%),
-    radial-gradient(circle at 82% 16%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 34%),
-    linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.02));
 }
 
 .ui-workspace-shell-search .ui-workspace-atmosphere {
