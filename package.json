@@ -53,6 +53,7 @@
     "data:names": "tsx scripts/build-name-stats.ts",
     "data:forms": "tsx scripts/build-form-index.ts",
     "audit:search": "tsx scripts/audit-search-coverage.ts",
+    "audit:lemmas": "tsx scripts/audit-lemma-search.ts",
     "data:lemma-form": "tsx scripts/build-lemma-form-stats.ts",
     "graphs:build": "tsx scripts/build-graph-images.ts",
     "favicon:build": "tsx scripts/build-favicon.ts",
