@@ -341,6 +341,14 @@ export default function MinimalHome({
       if (lr) pushRoot(lr.bare, true);
       // Inflected surface word → its root (اسم → سمو, الرحمن → رحم).
       if (formIdx) pushRoot(lookupFormRoot(formIdx, q) ?? undefined, true);
+      // A LEMMA the corpus never writes bare. form-index maps only surface
+      // forms, so a dictionary word that occurs solely inflected had no way
+      // in: يصف is the lemma of يصفون/تصف (13×) but appears nowhere on its
+      // own, and مسلم (39×) only ever as مسلمين/مسلمون. The result card
+      // *displays* these — type يَصِفُ back and, before this, the search went
+      // blank on a word it had just shown you. 667 of 4,363 lemmas were
+      // unreachable this way; see scripts/audit-lemma-search.ts.
+      if (drillIdx) pushRoot(lookupLemma(drillIdx, q)?.r ?? undefined, true);
     }
     // Same-prefix alternatives (partial typing).
     for (const e of namePrefixMatches(nameIdx, q)) pushName(e);
@@ -361,7 +369,9 @@ export default function MinimalHome({
     };
     out.sort((a, b) => rank(a) - rank(b) || b.count - a.count);
     return out.slice(0, 8);
-  }, [idx, nameIdx, formIdx, dq]);
+    // drillIdx arrives a beat after the first keystroke (it is fetched lazily,
+    // below), so this memo re-runs and a lemma-only query fills in then.
+  }, [idx, nameIdx, formIdx, drillIdx, dq]);
 
   // The single result to render: an explicit chooser pick, or the sole
   // candidate. More than one (and no pick) → show the chooser.
