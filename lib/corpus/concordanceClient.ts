@@ -237,16 +237,65 @@ export function selectConcordance(
   };
 }
 
-/** Ring order options from the spec. */
-export type RingOrder = "mushaf" | "length" | "meetings";
+/**
+ * Ring order options from the spec. `firstMeeting` sorts by where a surah's
+ * first meeting falls: at rest the first meetings trace a spiral outward, and
+ * aligning afterwards turns the spiral into a column.
+ */
+export type RingOrder = "mushaf" | "length" | "meetings" | "firstMeeting";
 
 /**
  * Ring order, innermost first. Mushaf order runs 114 → 1 so the short surahs
- * sit at the centre, as the spec describes.
+ * sit at the centre, as the spec describes. Ties always fall back to mushaf
+ * order so a sort is stable across renders.
  */
 export function orderRings(surahs: SurahHit[], order: RingOrder): SurahHit[] {
   const out = [...surahs];
   if (order === "mushaf") return out.sort((a, b) => b.n - a.n);
   if (order === "length") return out.sort((a, b) => a.ayahCount - b.ayahCount || b.n - a.n);
+  if (order === "firstMeeting") {
+    // A surah with no meeting has nowhere to sit on the spiral; it goes last.
+    const first = (s: SurahHit) => (s.meetings.length ? s.meetings[0].pos : Infinity);
+    return out.sort((a, b) => first(a) - first(b) || b.n - a.n);
+  }
   return out.sort((a, b) => a.meetings.length - b.meetings.length || b.n - a.n);
+}
+
+/** Surah n → its ayahs → the written words, index-aligned with the root map. */
+export interface ConcordanceText {
+  version: number;
+  surahs: string[][][];
+}
+
+let textCache: ConcordanceText | null = null;
+let textPromise: Promise<ConcordanceText> | null = null;
+
+/**
+ * The words of every ayah, for the hover read-out.
+ *
+ * A separate file from the root map on purpose: ~258 KB gzipped against the
+ * map's 91, and only a reader who hovers needs it, so it is fetched on the
+ * first hover rather than when the mode opens. It is the corpus's own text
+ * rather than the app's ayah source because hover colours root words BY WORD
+ * INDEX, and the app's text (Supabase / Quran.com) numbers words differently
+ * wherever the corpus splits or merges a written word.
+ */
+export async function loadConcordanceText(): Promise<ConcordanceText> {
+  if (textCache) return textCache;
+  if (!textPromise) {
+    textPromise = fetch("/data/concordance-text.json")
+      .then((r) => {
+        if (!r.ok) throw new Error(`concordance-text ${r.status}`);
+        return r.json();
+      })
+      .then((d: ConcordanceText) => {
+        textCache = d;
+        return d;
+      })
+      .catch((e) => {
+        textPromise = null;
+        throw e;
+      });
+  }
+  return textPromise;
 }

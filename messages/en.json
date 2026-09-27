@@ -485,6 +485,10 @@
             "collocation-network": {
                 "label": "Collocation Network",
                 "description": "Analyze co-occurring roots and semantic neighborhoods"
+            },
+            "concordance-rings": {
+                "label": "Concordance Rings",
+                "description": "Two or three roots across all 114 surahs, and where they share an ayah"
             }
         }
     },
@@ -1088,6 +1092,77 @@
             "windowTypeHintSurah": "Uses all words in the same surah, highlighting chapter-level thematic association.",
             "contextWindowRefFormatSurah": "surah",
             "contextWindowRefHelpSurah": "This points to the surah where the tertiary context co-occurs with the selected term."
+        },
+        "ConcordanceRings": {
+            "title": "Concordance Rings",
+            "roleDescription": "concordance rings",
+            "stageLabel": "Concordance rings: every surah a ring, every ayah a tick, lit where the chosen roots occur",
+            "keyboardHelp": "Up and down arrows move between rings, left and right between ayahs. Enter selects a ring; Escape clears.",
+            "rootsLabel": "Roots",
+            "rootPlaceholder": "Add a root — Arabic, Buckwalter or meaning",
+            "removeRoot": "Remove {root}",
+            "occurrences": "{n}×",
+            "noRoots": "Choose up to three roots to light the rings.",
+            "noMatches": "No surah has all of these roots under the current rule.",
+            "presetsLabel": "Recurring phrases",
+            "presets": {
+                "creationOfHeavensEarth": "خلق السماوات والأرض",
+                "believeAndDoGood": "آمنوا وعملوا الصالحات",
+                "gardensRivers": "جنات تجري من تحتها الأنهار",
+                "waterFromSky": "أنزل من السماء ماء",
+                "forgivingMerciful": "غفور رحيم",
+                "worldlyLife": "الحياة الدنيا",
+                "painfulPunishment": "عذاب أليم",
+                "sunAndMoon": "الشمس والقمر"
+            },
+            "meetInLabel": "Roots meet in",
+            "meetIn": {
+                "ayah": "one ayah",
+                "surah": "one surah"
+            },
+            "viewLabel": "Rings",
+            "view": {
+                "stacked": "stacked",
+                "all": "all 114",
+                "overlaid": "overlaid"
+            },
+            "orderLabel": "Ring order (inside → out)",
+            "order": {
+                "mushaf": "114 → 1",
+                "length": "short → long",
+                "meetings": "fewest → most meetings",
+                "firstMeeting": "by first meeting"
+            },
+            "toggle": {
+                "threads": "threads",
+                "tint": "Makki / Madani tint",
+                "histogram": "position histogram"
+            },
+            "alignFirstMeeting": "Align at first meeting",
+            "resetRotation": "Reset rotation",
+            "surahsWord": "surahs",
+            "meetingsWord": "meetings",
+            "meeting": "meeting",
+            "atPosition": "{pos}% through the surah",
+            "ayahCount": "{n, plural, one {# ayah} other {# ayahs}}",
+            "andMore": "and {n} more",
+            "loading": "Loading the corpus map…",
+            "loadFailed": "The corpus map could not be loaded.",
+            "tableCaption": "Surahs where the chosen roots meet",
+            "meetingsHeading": "Where they meet",
+            "meetingsSummary": "{surahs} surahs · {meetings} meetings. Choose a surah to open its ring.",
+            "everyRootPresent": "every root present",
+            "surahCard": "{surah}",
+            "surahMeta": "{name} · {place} · {ayahs} ayahs",
+            "place": {
+                "makkah": "Makki",
+                "madinah": "Madani"
+            },
+            "closeCard": "Close",
+            "inAyahs": "in {n, plural, one {# ayah} other {# ayahs}}",
+            "allMeetIn": "all meet in {count, plural, one {ayah} other {ayahs}} {ayahs}",
+            "neverMeet": "never all in one ayah",
+            "openRadial": "Open this surah's radial ↗"
         }
     },
     "DisplaySettings": {
@@ -1490,6 +1565,25 @@
             },
             "purpose": "Spot frequency patterns at a glance across the entire Quran.",
             "claim": "Where a word shows up most, across every surah."
+        },
+        "concordance-rings": {
+            "summary": "Every surah is a ring and every ayah a tick on it. A tick lights in a root's colour where that root occurs, and becomes a meeting where every chosen root shares the same ayah.",
+            "purpose": "Frequency tables say how often a root occurs. This says where — and, for two or three roots at once, where they come together.",
+            "claim": "Where two or three roots meet across the whole Quran.",
+            "legend": {
+                "root1": "First root",
+                "root2": "Second root",
+                "root3": "Third root",
+                "meeting": "Meeting — every chosen root in one ayah",
+                "ayah": "Tick — one ayah; height follows its word count",
+                "thread": "Thread — a meeting to the nearest one on the next ring",
+                "histogram": "Outer histogram — where meetings fall, 0–100 through a surah"
+            },
+            "hint": {
+                "roots": "Choose up to three roots, or start from a recurring phrase.",
+                "hover": "Hover a tick for its surah, ayah and which roots occur there.",
+                "view": "Switch between the surahs that qualify and all 114."
+            }
         }
     },
     "VizIntroCard": {

@@ -149,7 +149,7 @@ function sideInsetFromOverlap(overlap: ElementOverlap, pxToUser: number): { star
  * simply not overlapping this particular SVG (e.g. an embed rendered
  * without the app shell).
  */
-function getInlineOcclusionInset(svg: SVGSVGElement, vw: number): { start: number; end: number } {
+function getInlineOcclusionInset(svg: Element, vw: number): { start: number; end: number } {
   const svgRect = svg.getBoundingClientRect();
   if (svgRect.width <= 0 || svgRect.height <= 0) return { start: 0, end: 0 };
   const pxToUser = vw / svgRect.width;
@@ -179,7 +179,7 @@ function getInlineOcclusionInset(svg: SVGSVGElement, vw: number): { start: numbe
  * side to "decide" — the inset is simply the band from the SVG's own edge
  * to the occluder's near edge.
  */
-function getVerticalOcclusionInset(svg: SVGSVGElement, vh: number): { top: number; bottom: number } {
+function getVerticalOcclusionInset(svg: Element, vh: number): { top: number; bottom: number } {
   const svgRect = svg.getBoundingClientRect();
   if (svgRect.width <= 0 || svgRect.height <= 0) return { top: 0, bottom: 0 };
   const pxToUser = vh / svgRect.height;
@@ -234,6 +234,23 @@ function clampInsetPair(a: number, b: number, maxTotal: number): { a: number; b:
  * floating chrome using the exact same measurement + clamp `fitBoundsToView`
  * itself relies on.
  */
+/**
+ * The part of an element's own box that shell chrome does not cover, in CSS
+ * pixels relative to that element — the dock, the context drawer, the status
+ * pill and the graph toolbar, measured and clamped exactly as fitGraphToView
+ * does. The canvas counterpart of that function, for modes that draw to a
+ * <canvas> instead of a zoomable SVG and so have no viewBox to fit.
+ */
+export function getVisibleArea(el: Element): { x: number; y: number; width: number; height: number } {
+  const rect = el.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0, width: rect.width, height: rect.height };
+  const inline = getInlineOcclusionInset(el, rect.width);
+  const vertical = getVerticalOcclusionInset(el, rect.height);
+  const h = clampInsetPair(inline.start, inline.end, rect.width * MAX_INLINE_INSET_FRACTION);
+  const v = clampInsetPair(vertical.top, vertical.bottom, rect.height * MAX_VERTICAL_INSET_FRACTION);
+  return { x: h.a, y: v.a, width: rect.width - h.a - h.b, height: rect.height - v.a - v.b };
+}
+
 export function getPanelAdjustedWidth(
   svg: SVGSVGElement | null,
   vw: number

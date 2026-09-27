@@ -10,12 +10,22 @@
  * DB-backed views. Word grouping matches that script segment for segment, and
  * the build asserts the totals agree with root-stats.json before writing.
  *
- * Ayah TEXT is deliberately not included. The spec left that open; the answer
- * is the size table this script prints — text is ~4x the rest of the payload,
- * and the app already fetches ayah text for the verse carousel, so hover can
- * use the same source rather than every visitor downloading all 6,236 ayahs.
+ * Two files, because they are needed at different moments:
  *
- * Emits public/data/concordance.json (committed).
+ *   concordance.json       the root map — every ring, tick and meeting. Fetched
+ *                          when the mode opens. 337 KB raw, 91 KB gzipped.
+ *   concordance-text.json  the words of every ayah, for the hover read-out.
+ *                          Fetched on the first hover, so opening the mode
+ *                          never pays for it.
+ *
+ * The text has to come from HERE, not from the app's ayah text source. Hover
+ * colours the words that carry the chosen roots by word index, and the app's
+ * full-corpus text comes from Supabase / Quran.com, whose word numbering does
+ * not match the corpus wherever QAC splits or merges a written word — the same
+ * drift that skews corpus_tokens. Text built from the morphology file lines up
+ * with the root map index for index, by construction.
+ *
+ * Both committed.
  * Run: npm run data:concordance
  */
 import { promises as fs } from "node:fs";
@@ -27,6 +37,7 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const SRC = path.join(ROOT_DIR, "public", "data", "quranic-corpus-morphology-0.4.txt");
 const STATS = path.join(ROOT_DIR, "public", "data", "root-stats.json");
 const OUT = path.join(ROOT_DIR, "public", "data", "concordance.json");
+const TEXT_OUT = path.join(ROOT_DIR, "public", "data", "concordance-text.json");
 
 // Buckwalter → Arabic. Same table as scripts/build-root-stats.ts; the two must
 // agree or the root keys here would not join that file's glosses.
@@ -47,9 +58,8 @@ const NO_ROOT = -1;
 
 interface Word {
   root: string | null;
-  /** Character length of the written word — only used to size the text column
-   *  of the size report, never written to the payload. */
-  textLen: number;
+  /** The written word, segments joined, vowelled as the corpus writes it. */
+  text: string;
 }
 
 export interface ConcordancePayload {
@@ -86,8 +96,8 @@ async function main() {
     let a = s.get(ayah);
     if (!a) s.set(ayah, (a = new Map()));
     let w = a.get(word);
-    if (!w) a.set(word, (w = { root: null, textLen: 0 }));
-    w.textLen += bw2ar(parts[1]).length;
+    if (!w) a.set(word, (w = { root: null, text: "" }));
+    w.text += bw2ar(parts[1]);
     if (rootTok && !w.root) w.root = bw2ar(rootTok.slice(5));
   }
 
@@ -120,7 +130,7 @@ async function main() {
   let ayahCount = 0;
   let wordCount = 0;
   let rootBearing = 0;
-  let textChars = 0;
+  const ayahText: string[][][] = [];
   const surahs = [...quran.keys()].sort((a, b) => a - b).map((n) => {
     const ayahs = [...quran.get(n)!.entries()]
       .sort((x, y) => x[0] - y[0])
@@ -128,13 +138,12 @@ async function main() {
         const ws = [...a.entries()].sort((x, y) => x[0] - y[0]).map(([, w]) => w);
         ayahCount++;
         wordCount += ws.length;
-        for (const w of ws) {
-          textChars += w.textLen + 1;
-          if (w.root) rootBearing++;
-        }
-        return ws.map((w) => (w.root ? rootIdx.get(w.root)! : NO_ROOT));
+        for (const w of ws) if (w.root) rootBearing++;
+        return ws;
       });
-    return { n, ayahs };
+    // Parallel arrays, index for index: the root map and the words it indexes.
+    ayahText.push(ayahs.map((ws) => ws.map((w) => w.text)));
+    return { n, ayahs: ayahs.map((ws) => ws.map((w) => (w.root ? rootIdx.get(w.root)! : NO_ROOT))) };
   });
 
   const payload: ConcordancePayload = {
@@ -156,16 +165,17 @@ async function main() {
   };
 
   await fs.writeFile(OUT, JSON.stringify(payload));
+  await fs.writeFile(TEXT_OUT, JSON.stringify({ version: 1, surahs: ayahText }));
   const bytes = (await fs.stat(OUT)).size;
+  const textBytes = (await fs.stat(TEXT_OUT)).size;
 
   console.log(`\n── concordance.json ───────────────────────────────────────────`);
   console.log(`   ${payload.totals.surahs} surahs · ${payload.totals.ayahs} ayahs · ${payload.totals.words.toLocaleString("en-US")} words`);
   console.log(`   ${payload.totals.rootBearing.toLocaleString("en-US")} root-bearing · ${payload.totals.roots} roots`);
-  console.log(`\n   Payload, and why ayah text stays out of it:`);
-  console.log(`     root map (written)   ${(bytes / 1024).toFixed(0)} KB`);
-  console.log(`     ayah text (omitted)  ~${(textChars * 2 / 1024).toFixed(0)} KB as UTF-8 JSON`);
-  console.log(`   Hover reads text from the existing ayah source instead.`);
-  console.log(`\n   -> ${path.relative(ROOT_DIR, OUT)}\n`);
+  console.log(`\n   root map   ${(bytes / 1024).toFixed(0)} KB  — fetched when the mode opens`);
+  console.log(`   ayah text  ${(textBytes / 1024).toFixed(0)} KB  — fetched on first hover`);
+  console.log(`\n   -> ${path.relative(ROOT_DIR, OUT)}`);
+  console.log(`   -> ${path.relative(ROOT_DIR, TEXT_OUT)}\n`);
 }
 
 main().catch((e) => {

@@ -29,6 +29,7 @@ const VISUALIZATION_OPTIONS: Array<{
     { mode: "dependency-tree", icon: "\u228F" },
     { mode: "sankey-flow", icon: "\u224B" },
     { mode: "collocation-network", icon: "🕸️" },
+    { mode: "concordance-rings", icon: "◎" },
     { mode: "knowledge-graph", icon: "🌱" },
   ];
 
