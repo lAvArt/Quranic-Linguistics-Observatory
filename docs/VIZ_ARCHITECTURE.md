@@ -41,6 +41,12 @@ the sidebar portal (see Shell anatomy).
 Mode switching: `components/ui/VisualizationSwitcher.tsx` (grouped by intent,
 beginner/advanced toggle) inside `components/shell/GraphToolbar.tsx`.
 
+Partly built: a tenth mode, `concordance-rings` (2–3 roots across all 114
+surahs as concentric rings, meetings where they share an ayah). Spec, figures and
+performance notes: `docs/CONCORDANCE-RINGS.md`. The data layer has landed —
+`scripts/build-concordance.ts` → `public/data/concordance.json`, queried through
+`lib/corpus/concordanceClient.ts` — but no component renders it yet.
+
 ## Shell anatomy (AppShell)
 
 `components/shell/AppShell.tsx` composes, around `components/home/VisualizationViewport.tsx`:
