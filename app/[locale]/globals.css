@@ -7226,6 +7226,30 @@ button.site-footer-link {
 .fq-tie-n { color: var(--ink-muted); margin-inline-end: 10px; }
 .fq-tie-m i { font-style: normal; margin-inline-start: 7px; }
 
+/* Named entities — reuses the board table; only the extras are new. */
+.fq-bar--name { background: var(--viz-cat-madani); }
+.fq-phrase {
+  display: inline-block;
+  margin-inline-start: 8px;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-sans, "Space Grotesk"), sans-serif;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  vertical-align: middle;
+}
+.fq-kpi b.fq-root { font-size: 30px; line-height: 1.1; }
+.fq-note {
+  margin-block: 12px 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.6;
+  max-inline-size: 72ch;
+}
+
 /* Source line */
 .fq-source {
   border-block-start: 1px solid var(--line);

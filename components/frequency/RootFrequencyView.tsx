@@ -35,6 +35,11 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
 
   const peak = d.leaderboard[0].count;
 
+  // Named entities are already sorted by count, so the first is the most
+  // frequent; widest reach is a separate question and a different name.
+  const topName = d.names.entries[0];
+  const widestName = d.names.entries.reduce((a, b) => (b.surahs > a.surahs ? b : a));
+
   // Controls: cumulative "Top N" up to 100, then fixed pages of 100 beyond it.
   // A 400-row dump past rank 100 is unreadable, and every row is in the HTML
   // either way — paging is what makes the tail usable without client JS.
@@ -68,7 +73,7 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
     <AppWorkspaceShell
       kicker={t("kicker")}
       title={t("title")}
-      description={t("subtitle", { roots: n(d.totals.roots), words: n(d.totals.words) })}
+      description={t("subtitle", { roots: n(d.totals.roots), words: n(d.totals.words), names: n(d.names.total) })}
       panelWidth="wide"
     >
       {/* ── Overview ──────────────────────────────────────────────────── */}
@@ -326,6 +331,74 @@ export default async function RootFrequencyView({ locale }: { locale: string }) 
             <li><i className="fq-swatch fq-swatch--accent" />{t("legendConcentrated")}</li>
           </ul>
         </div>
+      </section>
+
+      {/* ── Named entities ────────────────────────────────────────────── */}
+      <section className="fq-section" aria-labelledby="fq-names">
+        <h2 className="fq-h2" id="fq-names">{t("namesHeading")}</h2>
+        <p className="fq-lede">{t("namesLede")}</p>
+
+        <div className="fq-kpis">
+          <div className="fq-kpi fq-kpi--accent">
+            <b>{n(d.names.total)}</b>
+            <span>{t("statNames")}</span>
+          </div>
+          <div className="fq-kpi">
+            <b>{n(d.names.occurrences)}</b>
+            <span>{t("statNameOccurrences", { n: n(d.names.singles) })}</span>
+          </div>
+          <div className="fq-kpi fq-kpi--alt">
+            <b className="fq-root" dir="rtl" lang="ar">{topName.bare}</b>
+            <span>{t("statTopName", { n: n(topName.count) })}</span>
+          </div>
+          <div className="fq-kpi">
+            <b className="fq-root" dir="rtl" lang="ar">{widestName.bare}</b>
+            <span>{t("statWidestName", { n: n(widestName.surahs) })}</span>
+          </div>
+        </div>
+
+        <div className="fq-card fq-card--table">
+          <table className="fq-table fq-table--board">
+            <caption className="fq-sr">{t("namesHeading")}</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="fq-num">{t("colRank")}</th>
+                <th scope="col">{t("colName")}</th>
+                <th scope="col" className="fq-hide-sm" />
+                <th scope="col">{t("colMeans")}</th>
+                <th scope="col" className="fq-num">{t("colCount")}</th>
+                <th scope="col" className="fq-num fq-hide-sm">{t("colSurahs")}</th>
+                <th scope="col" className="fq-num fq-hide-sm">{t("colVerses")}</th>
+                <th scope="col" className="fq-hide-sm" />
+              </tr>
+            </thead>
+            <tbody>
+              {d.names.entries.map((e) => (
+                <tr key={e.bare}>
+                  <td className="fq-num fq-dim">{n(e.rank)}</td>
+                  <td className="fq-root" dir="rtl" lang="ar">
+                    {e.bare}
+                    {e.phrase ? <span className="fq-phrase" title={t("phraseNote")}>{t("phraseTag")}</span> : null}
+                  </td>
+                  <td className="fq-translit fq-hide-sm" dir={CHART_DIR}>{e.translit}</td>
+                  {/* Name glosses are English-only (lib/data/nameGlosses.ts has
+                      `en` + `translit`, no Arabic), so this cell is ltr in both
+                      locales and the ar column header says so. */}
+                  <td className="fq-gloss" dir="ltr" lang="en">
+                    {e.gloss ?? <span className="fq-dim">{t("noGloss")}</span>}
+                  </td>
+                  <td className="fq-num">{n(e.count)}</td>
+                  <td className="fq-num fq-dim fq-hide-sm">{n(e.surahs)}</td>
+                  <td className="fq-num fq-dim fq-hide-sm">{n(e.verses)}</td>
+                  <td className="fq-barcell fq-hide-sm">
+                    <span className="fq-bar fq-bar--name" style={{ width: `${((e.count / topName.count) * 100).toFixed(2)}%` }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="fq-note">{t("phraseNote")}</p>
       </section>
 
       {/* Method note only. The Kais Dukes / Quranic Arabic Corpus credit is a

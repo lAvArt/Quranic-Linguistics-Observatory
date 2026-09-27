@@ -34,6 +34,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..");
 const SRC = path.join(ROOT_DIR, "public", "data", "root-stats.json");
+const NAMES_SRC = path.join(ROOT_DIR, "public", "data", "name-stats.json");
 const OUT_DIR = path.join(ROOT_DIR, "public", "data", "_local");
 
 interface RootEntry {
@@ -84,6 +85,35 @@ interface Report {
     share: number; cumShare: number;
   }[];
   scatter: { bare: string; gloss: string | null; count: number; surahs: number; topShare: number; topSura: number }[];
+  names: NameBlock;
+}
+
+/**
+ * Proper nouns, which the corpus tags separately: they carry no root, so none
+ * of their occurrences are inside the root-bearing word count above.
+ *
+ * `occurrences` deliberately covers the single-word names only. The four
+ * compound phrases are counted apart because their occurrences are a SUBSET of
+ * a single-word entry wherever one exists — بني إسرائيل (27x) is 27 of
+ * إسرائيل's 43 — so adding the two together would count those words twice.
+ */
+interface NameBlock {
+  total: number;
+  singles: number;
+  compounds: number;
+  occurrences: number;
+  entries: {
+    rank: number;
+    bare: string;
+    translit: string;
+    gloss: string | null;
+    count: number;
+    surahs: number;
+    verses: number;
+    first: { sura: number; ayah: number } | null;
+    /** Multi-word phrase; its occurrences overlap a single-word entry. */
+    phrase: boolean;
+  }[];
 }
 
 async function main() {
@@ -173,6 +203,41 @@ async function main() {
       topSura: r.top[0] ? r.top[0][0] : 0,
     }));
 
+  // ── Named entities ───────────────────────────────────────────────────────
+  interface NameEntry {
+    kind: string;
+    bare: string;
+    translit: string;
+    gloss: string | null;
+    count: number;
+    surahs: number;
+    verses: number;
+    first: { sura: number; ayah: number } | null;
+  }
+  const nameRaw = JSON.parse(await fs.readFile(NAMES_SRC, "utf8")) as { names: Record<string, NameEntry> };
+  const nameList = Object.values(nameRaw.names)
+    .filter((e) => e.kind === "name")
+    .sort((x, y) => y.count - x.count || x.bare.localeCompare(y.bare));
+  const isPhrase = (e: NameEntry) => /\s/.test(e.bare);
+  const singles = nameList.filter((e) => !isPhrase(e));
+  const names: NameBlock = {
+    total: nameList.length,
+    singles: singles.length,
+    compounds: nameList.length - singles.length,
+    occurrences: singles.reduce((s, e) => s + e.count, 0),
+    entries: nameList.map((e, i) => ({
+      rank: i + 1,
+      bare: e.bare,
+      translit: e.translit,
+      gloss: e.gloss,
+      count: e.count,
+      surahs: e.surahs,
+      verses: e.verses,
+      first: e.first,
+      phrase: isPhrase(e),
+    })),
+  };
+
   const report: Report = {
     version: 2,
     generated: new Date().toISOString(),
@@ -206,6 +271,7 @@ async function main() {
       cumShare: cum[i] / totalWords,
     })),
     scatter,
+    names,
   };
 
   // ── Console summary ──────────────────────────────────────────────────────
