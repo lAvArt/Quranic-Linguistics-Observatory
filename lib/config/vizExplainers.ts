@@ -218,10 +218,13 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
   "concordance-rings": {
     summaryKey: "concordance-rings.summary",
     legend: [
-      { color: "var(--viz-root-1)", shape: "line", labelKey: "concordance-rings.legend.root1" },
-      { color: "var(--viz-root-2)", shape: "line", labelKey: "concordance-rings.legend.root2" },
-      { color: "var(--viz-meeting)", shape: "line", labelKey: "concordance-rings.legend.meeting" },
-      { color: "var(--viz-cat-makki)", shape: "arc", labelKey: "concordance-rings.legend.ring" },
+      { color: "var(--ink-muted)", shape: "rect", labelKey: "concordance-rings.legend.ayah" },
+      { color: "var(--viz-root-1)", shape: "rect", labelKey: "concordance-rings.legend.root1" },
+      { color: "var(--viz-root-2)", shape: "rect", labelKey: "concordance-rings.legend.root2" },
+      { color: "var(--viz-root-3)", shape: "rect", labelKey: "concordance-rings.legend.root3" },
+      { color: "var(--viz-meeting)", shape: "rect", labelKey: "concordance-rings.legend.meeting" },
+      { color: "var(--ink-muted)", shape: "line", labelKey: "concordance-rings.legend.thread" },
+      { color: "var(--ink-muted)", shape: "rect", labelKey: "concordance-rings.legend.histogram" },
     ],
     hintKeys: [
       "concordance-rings.hint.hover",

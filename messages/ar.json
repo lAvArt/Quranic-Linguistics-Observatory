@@ -1095,20 +1095,24 @@
         },
         "ConcordanceRings": {
             "title": "حلقات المعجم المفهرس",
+            "roleDescription": "حلقات المعجم المفهرس",
+            "stageLabel": "حلقات المعجم المفهرس: كل سورة حلقة، وكل آية علامة، تضيء حيث ترد الجذور المختارة",
+            "keyboardHelp": "سهما الأعلى والأسفل للتنقل بين الحلقات، والأيمن والأيسر بين الآيات. زر الإدخال يختار الحلقة، وزر الخروج يلغي الاختيار.",
             "rootsLabel": "الجذور",
             "rootPlaceholder": "أضف جذرًا — بالعربية أو بالحروف اللاتينية أو بالمعنى",
             "removeRoot": "إزالة {root}",
+            "occurrences": "{n}×",
             "noRoots": "اختر حتى ثلاثة جذور لتضيء الحلقات.",
             "noMatches": "لا سورة تجمع هذه الجذور وفق القاعدة الحالية.",
             "presetsLabel": "تراكيب متكررة",
             "presets": {
-                "believeAndDoGood": "آمنوا وعملوا الصالحات",
-                "painfulPunishment": "عذاب أليم",
                 "creationOfHeavensEarth": "خلق السماوات والأرض",
-                "forgivingMerciful": "غفور رحيم",
-                "worldlyLife": "الحياة الدنيا",
+                "believeAndDoGood": "آمنوا وعملوا الصالحات",
                 "gardensRivers": "جنات تجري من تحتها الأنهار",
                 "waterFromSky": "أنزل من السماء ماء",
+                "forgivingMerciful": "غفور رحيم",
+                "worldlyLife": "الحياة الدنيا",
+                "painfulPunishment": "عذاب أليم",
                 "sunAndMoon": "الشمس والقمر"
             },
             "meetInLabel": "تلتقي الجذور في",
@@ -1116,25 +1120,49 @@
                 "ayah": "آية واحدة",
                 "surah": "سورة واحدة"
             },
-            "viewLabel": "العرض",
+            "viewLabel": "الحلقات",
             "view": {
-                "stacked": "متراكب",
-                "all": "السور الـ114"
+                "stacked": "متراكبة",
+                "all": "السور الـ114",
+                "overlaid": "متطابقة"
             },
-            "orderLabel": "ترتيب الحلقات",
+            "orderLabel": "ترتيب الحلقات (من الداخل إلى الخارج)",
             "order": {
-                "mushaf": "ترتيب المصحف",
-                "length": "الطول",
-                "meetings": "اللقاءات"
+                "mushaf": "114 ← 1",
+                "length": "القصيرة ← الطويلة",
+                "meetings": "الأقل ← الأكثر لقاءً",
+                "firstMeeting": "بحسب أول لقاء"
             },
-            "centreSummary": "{surahs} سورة · {meetings} لقاءً",
+            "toggle": {
+                "threads": "الخيوط",
+                "tint": "تلوين مكي / مدني",
+                "histogram": "مدرَّج المواضع"
+            },
+            "alignFirstMeeting": "المحاذاة عند أول لقاء",
+            "resetRotation": "إعادة الدوران",
+            "surahsWord": "سورة",
+            "meetingsWord": "لقاءً",
             "meeting": "لقاء",
+            "atPosition": "عند {pos}٪ من السورة",
+            "ayahCount": "{n, plural, one {آية واحدة} two {آيتان} few {# آيات} many {# آية} other {# آية}}",
+            "andMore": "و{n} غيرها",
             "loading": "جارٍ تحميل خريطة المدوَّنة…",
             "loadFailed": "تعذَّر تحميل خريطة المدوَّنة.",
-            "tableCaption": "السور التي تلتقي فيها الجذور المختارة، والآيات التي تلتقي فيها",
-            "colSurah": "السورة",
-            "colMeetings": "اللقاءات",
-            "colAyahs": "الآيات"
+            "tableCaption": "السور التي تلتقي فيها الجذور المختارة",
+            "meetingsHeading": "مواضع اللقاء",
+            "meetingsSummary": "{surahs} سورة · {meetings} لقاءً. اختر سورة لتفتح حلقتها.",
+            "everyRootPresent": "الجذور كلها حاضرة",
+            "surahCard": "{surah}",
+            "surahMeta": "{name} · {place} · {ayahs} آية",
+            "place": {
+                "makkah": "مكية",
+                "madinah": "مدنية"
+            },
+            "closeCard": "إغلاق",
+            "inAyahs": "في {n, plural, one {آية واحدة} two {آيتين} few {# آيات} many {# آية} other {# آية}}",
+            "allMeetIn": "تجتمع كلها في {count, plural, one {الآية} other {الآيات}} {ayahs}",
+            "neverMeet": "لا تجتمع كلها في آية واحدة",
+            "openRadial": "افتح الخريطة الشعاعية لهذه السورة ↗"
         }
     },
     "DisplaySettings": {
@@ -1545,8 +1573,11 @@
             "legend": {
                 "root1": "الجذر الأول",
                 "root2": "الجذر الثاني",
+                "root3": "الجذر الثالث",
                 "meeting": "لقاء — كل الجذور المختارة في آية واحدة",
-                "ring": "حلقة — سورة واحدة، ملوَّنة بمكان النزول"
+                "ayah": "علامة — آية واحدة؛ طولها بحسب عدد كلماتها",
+                "thread": "خيط — من لقاء إلى أقرب لقاء في الحلقة التالية",
+                "histogram": "المدرَّج الخارجي — مواضع اللقاءات من 0 إلى 100 في السورة"
             },
             "hint": {
                 "roots": "اختر حتى ثلاثة جذور، أو ابدأ من تركيب متكرر.",

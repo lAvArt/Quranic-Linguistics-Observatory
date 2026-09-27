@@ -47,18 +47,29 @@ rings, meetings where they share an ayah). Spec, figures and performance notes:
 
 | | |
 | --- | --- |
-| Component | `ConcordanceRings.tsx` |
-| Data | `scripts/build-concordance.ts` → `public/data/concordance.json`, queried through `lib/corpus/concordanceClient.ts` (lazy, 91 KB gzipped) |
-| Built | stacked and all-114 views, root picker, the spec's eight phrase presets, both "meet in" rules, three ring orders, hover read-out, hidden meetings table |
-| Not yet | overlaid view, align-at-first-meeting, threads between rings, ring selection with inner wiring, ayah text on hover, WebGL ticks |
+| Component | `ConcordanceRings.tsx`, with `concordance/ConcordanceControls.tsx` (sidebar) and `concordance/ConcordanceDrawer.tsx` (details panel) |
+| Data | `scripts/build-concordance.ts` → `public/data/concordance.json` (opens with the mode, 91 KB gzipped) and `concordance-text.json` (first hover, 258 KB) |
+| Logic | `lib/corpus/concordanceClient.ts` (selection), `lib/viz/concordance/geometry.ts` (layout, ticks, hit-testing), `motion.ts` (turn and travel) |
+| Rendering | `tickRenderer.ts` (WebGL2 instanced, `Path2D` fallback) and `drawLayers.ts` (2D scale, histogram, threads, overlaid view, selection) |
+| Not yet | the alternative turn anchors (last meeting, one root's first occurrence, median meeting) |
 
-Rendered on three stacked canvases: tracks and labels drawn once, ticks redrawn
-only when the selection changes, hover on its own layer so pointer moves never
-repaint the rings. The spec's WebGL tick path is for the animated views, which
-are not built; a static 2D render of this many marks is comfortably fast.
+Three canvases: a 2D back layer (scale, marker, histogram, threads), the WebGL
+ticks, and a 2D front layer (selection wiring, hover outline). While rings move,
+only a 2×128 texture of ring positions changes per frame. 60 fps on a real GPU.
+Measure with `--use-angle=d3d11`: headless Chromium otherwise uses SwiftShader and
+reports about a quarter of that.
 
-Root colours are `--viz-root-1..3` with `--viz-meeting`, added for this mode:
-three categorical slots, and the two `--viz-cat-*` tokens only cover two.
+Shell mechanisms this mode added, available to any mode:
+
+- `#viz-context-portal` on the drawer's Explain tab, the right-hand counterpart of
+  `#viz-sidebar-portal`. Dispatch `viz:context-request` on `window` to bring that tab forward.
+- `getVisibleArea(el)` in `lib/viz/fitToView.ts`: the part of an element that the dock,
+  drawer, status pill and toolbar leave uncovered, for canvas modes, which have no
+  viewBox for `fitGraphToView`.
+- `--viz-root-1..3` and `--viz-meeting`: theme-stable categorical colours for up to
+  three roots.
+- The site link map (`SiteNavMap`) is hidden while the AppShell is mounted, so the
+  observatory never scrolls. The `?viz=` branch is not a crawl target (see `page.tsx`).
 
 ## Shell anatomy (AppShell)
 

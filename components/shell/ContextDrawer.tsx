@@ -72,6 +72,14 @@ export default function ContextDrawer({
 }: ContextDrawerProps) {
   const t = useTranslations("ContextDrawer");
   const [activeTab, setActiveTab] = useState<DrawerTab>("explain");
+
+  // A viz mode that has just put something in viz-context-portal (a selected
+  // ring's card, say) asks for the tab that portal lives on.
+  useEffect(() => {
+    const show = () => setActiveTab("explain");
+    window.addEventListener("viz:context-request", show);
+    return () => window.removeEventListener("viz:context-request", show);
+  }, []);
   const [scannerOpen, setScannerOpen] = useState(false);
   const prevTokenRef = useRef<CorpusToken | null>(null);
   const prevExplainRequestRef = useRef(explainRequestId);
@@ -166,6 +174,10 @@ export default function ContextDrawer({
         aria-labelledby="drawer-tab-explain"
         style={{ display: activeTab === "explain" ? undefined : "none" }}
       >
+        {/* Mode-owned details (a selected item's card, a mode's own lists)
+            portal in here, the right-hand counterpart of viz-sidebar-portal.
+            Empty for modes that don't use it. */}
+        <div id="viz-context-portal" className="viz-context-portal" />
         <VizExplainer vizMode={vizMode} />
       </div>
 
