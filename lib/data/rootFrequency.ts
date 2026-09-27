@@ -40,6 +40,36 @@ export interface FrequencyRow {
   cumShare: number;
 }
 
+export interface NameEntry {
+  rank: number;
+  bare: string;
+  translit: string;
+  gloss: string | null;
+  count: number;
+  surahs: number;
+  verses: number;
+  first: { sura: number; ayah: number } | null;
+  /** Multi-word phrase whose occurrences overlap a single-word entry. */
+  phrase: boolean;
+}
+
+/**
+ * Proper nouns. The corpus tags them separately because they carry no root,
+ * so none of their occurrences sit inside the root-bearing word count.
+ *
+ * `occurrences` covers the single-word names only: the four compound phrases
+ * are counted apart because each one's occurrences are a SUBSET of a
+ * single-word entry wherever one exists — بني إسرائيل (27×) is 27 of
+ * إسرائيل's 43 — so adding the two totals would count those words twice.
+ */
+export interface NameBlock {
+  total: number;
+  singles: number;
+  compounds: number;
+  occurrences: number;
+  entries: NameEntry[];
+}
+
 export interface RootFrequencyReport {
   version: number;
   generated: string;
@@ -56,6 +86,7 @@ export interface RootFrequencyReport {
   }[];
   leaderboard: FrequencyRow[];
   scatter: { bare: string; gloss: string | null; count: number; surahs: number; topShare: number; topSura: number }[];
+  names: NameBlock;
 }
 
 export const ROOT_FREQUENCY = report as unknown as RootFrequencyReport;

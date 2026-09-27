@@ -10,8 +10,8 @@
         "studyDescription": "Track Arabic roots, review your learning progress, and build a personal knowledge map of the Quran.",
         "quizTitle": "Quiz",
         "quizDescription": "Test your knowledge of Quranic roots and morphology with generated quizzes.",
-        "frequencyTitle": "How often each Qur'anic root appears",
-        "frequencyDescription": "The most frequent roots in the Qur'an, ranked — with how many words each carries, how many surahs it reaches, and what the top 10, 100 and 500 roots add up to."
+        "frequencyTitle": "How often each Qur'anic root and name appears",
+        "frequencyDescription": "The most frequent roots in the Qur'an, ranked — with how many words each carries, how many surahs it reaches, and what the top 10, 100 and 500 roots add up to. Plus every proper noun the corpus tags, from Musa to Yajuj and Majuj."
     },
     "Home": {
         "eyebrow": "Search the Qur'an by meaning",
@@ -91,8 +91,8 @@
     },
     "Frequency": {
         "kicker": "Did you know",
-        "title": "How often each root appears",
-        "subtitle": "{roots} roots across {words} root-bearing words of the Qur'ān.",
+        "title": "How often each root and name appears",
+        "subtitle": "{roots} roots across {words} root-bearing words of the Qur'ān, plus {names} named entities the corpus counts separately.",
         "overviewHeading": "At a glance",
         "statRoots": "distinct roots",
         "statWords": "root-bearing words",
@@ -158,7 +158,17 @@
         "tipBand": "{range} occurrences",
         "tipRoots": "{n} roots · {share}",
         "tipWords": "{n} words · {share}",
-        "tipInSurah": "{share} of them in sūrah {n}"
+        "tipInSurah": "{share} of them in sūrah {n}",
+        "namesHeading": "Named entities",
+        "namesLede": "People, peoples, places and scriptures the corpus tags as proper nouns. They carry no root, so none of these occurrences are inside the root-bearing word count above — this is a separate population, counted separately.",
+        "statNames": "named entities",
+        "statNameOccurrences": "occurrences, across {n} single-word names",
+        "statTopName": "most frequent · {n}×",
+        "statWidestName": "reaches {n} sūrahs",
+        "colName": "Name",
+        "colMeans": "Who or what",
+        "phraseTag": "phrase",
+        "phraseNote": "Four entries are multi-word phrases. Their occurrences are also counted inside a single-word name wherever one exists — بني إسرائيل (27×) is 27 of إسرائيل's 43 — so the totals above count the single-word names only."
     },
     "Error": {
         "title": "Something went wrong",
