@@ -12,14 +12,26 @@
  * lists those pages (with their images) from it. Adding a mode here is the only
  * edit needed to extend the gallery.
  *
- * Deliberately a SUBSET of the nine modes, and the subset is forced, not
- * chosen: only the modes that load per-surah data from local JSON render in a
- * headless capture. Every DB-backed mode -- collocation-network,
- * surah-distribution, corpus-architecture, knowledge-graph, heatmap -- paints
- * an empty frame, because the Supabase corpus tables it reads return nothing
- * (`/api/collocations` answers `{"collocates":[]}`, and the full-corpus fetch
- * aborts). They are omitted because an empty graph is worse than no page at
- * all; add them here once the corpus is seeded and they capture properly.
+ * Deliberately a SUBSET of the ten modes, and the subset is forced, not
+ * chosen: a mode earns a place only once it actually paints in a headless
+ * capture, because an empty graph is worse than no page at all.
+ *
+ * Re-probed 2026-09-27 against a production build with a 9s settle, and the
+ * only thing that settles the question is LOOKING at the PNG. Counting SVG
+ * marks does not: collocation-network reports ~122 marks and is nonetheless
+ * blank, because the count is its decorative starfield, not one node of the
+ * graph. Do not re-admit a mode on a mark count alone.
+ *
+ *   radial-sura, sankey-flow, arc-flow, dependency-tree   -> in
+ *   collocation-network   blank starfield; the PMI fetch returns nothing
+ *                         inside an embed, exactly as before
+ *   root-network          paints 4 of 18 nodes and bakes in the
+ *                         "show full network" control — the force layout is
+ *                         still paginating when the shutter falls. Worth
+ *                         retrying with a much longer settle.
+ *   surah-distribution, corpus-architecture, knowledge-graph, heatmap
+ *                         render no <svg> at all; these fetch the whole
+ *                         corpus rather than one surah.
  */
 import type { VisualizationMode } from "@/lib/schema/visualizationTypes";
 
@@ -62,6 +74,13 @@ export const VIZ_GALLERY: readonly VizGalleryEntry[] = [
         titleKey: "ArcFlow",
         embedQuery: "surah=2",
         liveQuery: "viz=arc-flow&surah=2",
+    },
+    {
+        // One ayah's parse; Al-Fatihah 1:1 is short enough to read at 1200px.
+        mode: "dependency-tree",
+        titleKey: "AyahDependency",
+        embedQuery: "surah=1&ayah=1",
+        liveQuery: "viz=dependency-tree&surah=1&ayah=1",
     },
 ] as const;
 
