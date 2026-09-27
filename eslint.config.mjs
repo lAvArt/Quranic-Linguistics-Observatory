@@ -25,6 +25,11 @@ export default tseslint.config(
         ignores: [
             ".next/**",
             "node_modules/**",
+            // Local scratch — prototypes and one-off experiments, not part
+            // of the app or the data pipeline. Linting it only lets a
+            // half-finished experiment fail `npm run verify` for whoever is
+            // running it, which CI would never have seen either way.
+            "scripts/_local/**",
             "out/**",
             "coverage/**",
             "lint_report.json",
