@@ -38,6 +38,7 @@ export const ALL_VIZ_MODES: VisualizationMode[] = [
   "dependency-tree",
   "sankey-flow",
   "collocation-network",
+  "concordance-rings",
   "knowledge-graph",
 ];
 
@@ -56,6 +57,7 @@ export const VIEW_CONTEXT_CAPABILITIES: Record<VisualizationMode, ViewContextCap
   "dependency-tree": { ayah: true, root: false, lemma: false },
   "sankey-flow": { ayah: false, root: false, lemma: false },
   "collocation-network": { ayah: false, root: true, lemma: false },
+  "concordance-rings": { ayah: false, root: true, lemma: false },
   "knowledge-graph": { ayah: false, root: true, lemma: false },
   "heatmap": { ayah: false, root: false, lemma: false },
 };

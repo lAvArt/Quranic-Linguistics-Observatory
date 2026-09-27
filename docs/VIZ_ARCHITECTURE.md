@@ -41,11 +41,24 @@ the sidebar portal (see Shell anatomy).
 Mode switching: `components/ui/VisualizationSwitcher.tsx` (grouped by intent,
 beginner/advanced toggle) inside `components/shell/GraphToolbar.tsx`.
 
-Partly built: a tenth mode, `concordance-rings` (2–3 roots across all 114
-surahs as concentric rings, meetings where they share an ayah). Spec, figures and
-performance notes: `docs/CONCORDANCE-RINGS.md`. The data layer has landed —
-`scripts/build-concordance.ts` → `public/data/concordance.json`, queried through
-`lib/corpus/concordanceClient.ts` — but no component renders it yet.
+A tenth mode, `concordance-rings` (2–3 roots across all 114 surahs as concentric
+rings, meetings where they share an ayah). Spec, figures and performance notes:
+`docs/CONCORDANCE-RINGS.md`.
+
+| | |
+| --- | --- |
+| Component | `ConcordanceRings.tsx` |
+| Data | `scripts/build-concordance.ts` → `public/data/concordance.json`, queried through `lib/corpus/concordanceClient.ts` (lazy, 91 KB gzipped) |
+| Built | stacked and all-114 views, root picker, the spec's eight phrase presets, both "meet in" rules, three ring orders, hover read-out, hidden meetings table |
+| Not yet | overlaid view, align-at-first-meeting, threads between rings, ring selection with inner wiring, ayah text on hover, WebGL ticks |
+
+Rendered on three stacked canvases: tracks and labels drawn once, ticks redrawn
+only when the selection changes, hover on its own layer so pointer moves never
+repaint the rings. The spec's WebGL tick path is for the animated views, which
+are not built; a static 2D render of this many marks is comfortably fast.
+
+Root colours are `--viz-root-1..3` with `--viz-meeting`, added for this mode:
+three categorical slots, and the two `--viz-cat-*` tokens only cover two.
 
 ## Shell anatomy (AppShell)
 

@@ -213,6 +213,30 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
     ],
   },
 
+  // Root colours come from the theme-stable --viz-root-* tokens, not --accent,
+  // so a root keeps its colour when the theme changes.
+  "concordance-rings": {
+    summaryKey: "concordance-rings.summary",
+    legend: [
+      { color: "var(--viz-root-1)", shape: "line", labelKey: "concordance-rings.legend.root1" },
+      { color: "var(--viz-root-2)", shape: "line", labelKey: "concordance-rings.legend.root2" },
+      { color: "var(--viz-meeting)", shape: "line", labelKey: "concordance-rings.legend.meeting" },
+      { color: "var(--viz-cat-makki)", shape: "arc", labelKey: "concordance-rings.legend.ring" },
+    ],
+    hintKeys: [
+      "concordance-rings.hint.hover",
+      "concordance-rings.hint.roots",
+      "concordance-rings.hint.view",
+    ],
+    purposeKey: "concordance-rings.purpose",
+    claimKey: "concordance-rings.claim",
+    howToReadKeys: [
+      "concordance-rings.hint.roots",
+      "concordance-rings.hint.hover",
+      "concordance-rings.hint.view",
+    ],
+  },
+
   // Canvas tints tracked roots with the accent, ghosts stay neutral.
   "knowledge-graph": {
     summaryKey: "knowledge-graph.summary",

@@ -18,6 +18,7 @@ export type VisualizationMode =
   | "corpus-architecture" // Global corpus hierarchy map
   | "knowledge-graph"  // Neural network of tracked roots
   | "collocation-network" // Network map for root collocations and PMI
+  | "concordance-rings" // 2-3 roots across all 114 surahs as concentric rings
   | "heatmap";         // Frequency heatmap grid
 
 // ============================================================================
@@ -51,7 +52,7 @@ export const VISUALIZATION_GROUPS: VisualizationGroup[] = [
   {
     category: "trace-root",
     defaultMode: "root-network",
-    modes: ["root-network", "sankey-flow", "collocation-network"],
+    modes: ["root-network", "sankey-flow", "collocation-network", "concordance-rings"],
   },
   {
     category: "track-progress",

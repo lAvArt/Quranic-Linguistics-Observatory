@@ -34,6 +34,7 @@ const RootFlowSankey = buildVizComponent(() => import("@/components/visualisatio
 const CorpusArchitectureMap = buildVizComponent(() => import("@/components/visualisations/CorpusArchitectureMap"));
 const KnowledgeGraphViz = buildVizComponent(() => import("@/components/visualisations/KnowledgeGraphViz"));
 const CollocationNetworkGraph = buildVizComponent(() => import("@/components/visualisations/CollocationNetworkGraph"));
+const ConcordanceRings = buildVizComponent(() => import("@/components/visualisations/ConcordanceRings"));
 
 interface VisualizationViewportProps {
   vizMode: VisualizationMode;
@@ -211,6 +212,14 @@ export default function VisualizationViewport({
             highlightRoot={selectedRoot}
             selectedSurahId={selectedSurahId}
             theme={theme}
+          />
+        );
+      case "concordance-rings":
+        return (
+          <ConcordanceRings
+            theme={theme}
+            highlightRoot={selectedRoot}
+            onRootSelect={handleRootSelect}
           />
         );
       default:
