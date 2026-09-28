@@ -25,6 +25,15 @@ export interface VizExplainer {
   claimKey: string;
   /** Exactly 3 short "how to read it" steps for the intro card (i18n keys). */
   howToReadKeys: readonly [string, string, string];
+  /**
+   * Optional notes on reading the picture itself — its geometry, scale and
+   * marks — for views a colour legend can't explain alone. When present the
+   * panel heads them "How to read it" and the hints "How to use it", and the
+   * gallery page lists them too (i18n keys).
+   */
+  readKeys?: readonly string[];
+  /** Optional annotated diagram drawn above the reading notes. */
+  figure?: "concordance-anatomy";
 }
 
 /**
@@ -227,10 +236,15 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
       { color: "var(--ink-muted)", shape: "rect", labelKey: "concordance-rings.legend.histogram" },
     ],
     hintKeys: [
-      "concordance-rings.hint.hover",
       "concordance-rings.hint.roots",
+      "concordance-rings.hint.hover",
+      "concordance-rings.hint.meetIn",
       "concordance-rings.hint.view",
+      "concordance-rings.hint.order",
+      "concordance-rings.hint.align",
+      "concordance-rings.hint.toggles",
       "concordance-rings.hint.zoom",
+      "concordance-rings.hint.keys",
     ],
     purposeKey: "concordance-rings.purpose",
     claimKey: "concordance-rings.claim",
@@ -239,6 +253,17 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
       "concordance-rings.hint.hover",
       "concordance-rings.hint.view",
     ],
+    // Rings, a clockwise 0–100 scale and threads: the geometry needs reading
+    // notes of its own, not just colour swatches.
+    readKeys: [
+      "concordance-rings.read.rings",
+      "concordance-rings.read.scale",
+      "concordance-rings.read.ticks",
+      "concordance-rings.read.threads",
+      "concordance-rings.read.centre",
+      "concordance-rings.read.caveat",
+    ],
+    figure: "concordance-anatomy",
   },
 
   // Canvas tints tracked roots with the accent, ghosts stay neutral.
