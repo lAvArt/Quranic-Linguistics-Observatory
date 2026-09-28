@@ -57,6 +57,7 @@
     "audit:lemmas": "tsx scripts/audit-lemma-search.ts",
     "data:lemma-form": "tsx scripts/build-lemma-form-stats.ts",
     "graphs:build": "tsx scripts/build-graph-images.ts",
+    "videos:pinterest": "tsx scripts/pinterest-videos.ts",
     "favicon:build": "tsx scripts/build-favicon.ts",
     "db:seed": "dotenv -e .env.local -- tsx scripts/seed-corpus.ts",
     "db:email-templates": "dotenv -e .env.local -- tsx scripts/push-email-templates.ts",
