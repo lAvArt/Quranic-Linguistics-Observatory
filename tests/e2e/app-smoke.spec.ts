@@ -181,6 +181,37 @@ test.describe("app shell smoke", () => {
     await expect(page.getByTestId("collocation-min-frequency-control")).toBeVisible({ timeout: 60000 });
   });
 
+  test("concordance rings side panels take clicks and keys", async ({ page, isMobile }) => {
+    test.skip(isMobile, "desktop panels; the phone sheets are covered by the mobile flows");
+    test.setTimeout(90000);
+    await page.goto("/en?viz=concordance-rings");
+
+    // The panels portal out of the rings' stage. As its React children, their
+    // clicks reached the stage's pointer handlers, which captured the pointer
+    // and ate the click; their keys reached its ring keys, which ate spaces.
+    const chosen = page.locator(".cr-chosen .cr-root");
+    await expect(chosen).toHaveText(["خلق", "سمو", "ارض"], { timeout: 60000 });
+
+    await page.getByRole("button", { name: "Remove خلق" }).click();
+    await expect(chosen).toHaveText(["سمو", "ارض"]);
+
+    const input = page.locator(".cr-input");
+    await input.click();
+    await page.keyboard.type("ab c");
+    await expect(input).toHaveValue("ab c");
+    await input.fill("قمر");
+    await page.locator(".cr-suggest button").first().click();
+    await expect(chosen).toHaveText(["سمو", "ارض", "قمر"]);
+
+    await page.locator(".cr-presets button").first().click();
+    await expect(chosen).toHaveText(["خلق", "سمو", "ارض"]);
+
+    // A row of the details panel's meeting list opens its ring's card.
+    await page.locator(".drawer-edge-handle").click();
+    await page.locator(".cr-meetings button").first().click();
+    await expect(page.locator(".cr-drawer-head")).toBeVisible();
+  });
+
   test("arc flow hides grouping controls for beginners and reveals them for advanced users", async ({ page }) => {
     test.setTimeout(90000);
     await page.goto("/en");
