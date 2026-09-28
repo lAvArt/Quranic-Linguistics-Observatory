@@ -42,3 +42,10 @@ public/data/root-meanings.json
 # Local-only prototypes served by next dev — never shipped.
 # Under public/data/ because proxy.ts exempts only /data from locale rewriting.
 public/data/_local/
+# Generators for those prototypes (experiments, not part of the data pipeline).
+scripts/_local/
+# Internal working papers — never commit.
+docs/_local/
+# Third-party books and papers kept for reference (lexicons, concordance,
+# QAC papers) — not ours to publish, and too large for the repo.
+docs/Resources/
