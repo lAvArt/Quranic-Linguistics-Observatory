@@ -11,7 +11,7 @@ _Last full audit: 2026-07-18 (branch `feature/viz-declutter`)._
 | Surface | URL pattern | Notes |
 | --- | --- | --- |
 | Observatory (full shell) | `/{locale}/?viz={mode}&surah=&ayah=&root=&lemma=&token=` | Home page becomes AppShell when viz/selection params present. Deep-link hydration in `AppShell.tsx` (`useSearchParams` → `handleSearchResultNavigate`). |
-| Embeds (standalone) | `/embed/{mode}?surah=&root=&theme=` | `app/embed/[vizMode]/page.tsx` → `components/embed/EmbedClient.tsx`. postMessage protocol: `qcv:config`, `qcv:selection`, `qcv:ready`. Modes needing full corpus: `surah-distribution`, `corpus-architecture`, `knowledge-graph`. |
+| Embeds (standalone) | `/embed/{mode}?surah=&root=&theme=` | `app/embed/[vizMode]/page.tsx` → `components/embed/EmbedClient.tsx`. postMessage protocol: `qcv:config`, `qcv:selection`, `qcv:ready`. Modes needing full corpus: `surah-distribution`, `knowledge-graph`. `concordance-rings` and `corpus-architecture` fetch `concordance.json` themselves and skip the token load. |
 
 Example deep links: `/en?viz=radial-sura&surah=2`, `/en?viz=collocation-network&root=علم`
 (URL-encode Arabic in scripts). Root params are corpus root keys — plain-alif forms,
@@ -28,13 +28,13 @@ the sidebar portal (see Shell anatomy).
 
 | Mode id | Component | What it draws |
 | --- | --- | --- |
-| `radial-sura` | `RadialSuraMap.tsx` | Every word of one surah on a ring; per-ayah bars, root-connection curves, center annotation. Has zoom LOD (below). |
+| `radial-sura` | `RadialSuraMap.tsx` | Every word of one surah on a ring; per-ayah bars, root-connection curves, center annotation. Has zoom LOD (below); heavy layers memoised in `radialSura/layers.tsx` (below). |
 | `root-network` | `RootNetworkGraph.tsx` | Orbital system: root "planets" on canvas-scaled orbits (1 ring ≤24 roots, 2 frequency bands above) with lemma "moons" hugging their root; stellar-core center; sim pre-ticks before paint (no settle tangle); root-limit slider (advanced). |
 | `arc-flow` | `ArcFlowDiagram.tsx` | Grouped arc fan (group by root/POS/ayah) with frequency bars; root-mode arcs = ayah co-occurrence (weight = shared verses, scope-normalized widths, hover tooltip). |
 | `dependency-tree` | `AyahDependencyGraph.tsx` | Per-ayah syntax tree with labeled dependency arcs; surah/ayah stepper controls in sidebar. |
 | `sankey-flow` | `RootFlowSankey.tsx` | Root → word-form ribbons for the scoped surah; on-canvas chips carry scope/coverage. |
 | `surah-distribution` | `SurahDistributionGraph.tsx` | All 114 surahs, x = surah index, dot = surah (revelation place color, size = ayahs). |
-| `corpus-architecture` | `CorpusArchitectureMap.tsx` | Corpus → surah → root structure map with root search. **Occurrence mode** (2026-09-05) when a root is selected and no surah is drilled: leaves become that root's AYAHS, one wire per occurrence, everything else hidden; surahs carrying it stay lit, the rest are dim ring markers. |
+| `corpus-architecture` | `CorpusArchitectureMap.tsx` | The Quran structure map: 114 surah arcs (Makki/Madani), each surah's length as an inward bar, its roots outward. Three readings: overview (top five roots per surah), drill (one surah opens into a sector holding all its roots) and occurrences (a selected root's ayahs stacked on every surah that holds it). Rebuilt 2026-09-28; details below. |
 | `knowledge-graph` | `KnowledgeGraphViz.tsx` | Personal tracked-roots network; ghost/empty state when nothing tracked. |
 | `collocation-network` | `CollocationNetworkGraph.tsx` | PMI-weighted collocates orbiting a target root; "Heuristic estimate" badge = derived, not corpus-annotated. Strongest default view of the SVG modes. |
 | `concordance-rings` | `ConcordanceRings.tsx` | 2–3 roots across all 114 surahs: a ring per surah, a tick per ayah, cream where every root meets in one ayah. Canvas + WebGL2, with motion; details below. |
@@ -85,6 +85,61 @@ Shell mechanisms this mode added, available to any mode:
   three roots.
 - The site link map (`SiteNavMap`) is hidden while the AppShell is mounted, so the
   observatory never scrolls. The `?viz=` branch is not a crawl target (see `page.tsx`).
+
+### `corpus-architecture` (Quran structure map)
+
+Rebuilt 2026-09-28 on the rings' pattern: static data, pure geometry, memoised
+layers, nothing in React state during a gesture.
+
+| | |
+| --- | --- |
+| Data | `public/data/concordance.json` (the rings' payload: every word's root index, ayah by ayah) → `lib/viz/structureMap/model.ts` (`buildStructureModel`: per-surah words and root counts; `occurrencesOf`; `surahsWithRoot`). Complete the moment the file arrives, no corpus stream, same counts as the rings. `tokens` is used only to turn a clicked ayah into a real token id (a synthesised `sura:ayah:word` id resolves once that ayah streams in). |
+| Geometry | `lib/viz/structureMap/layout.ts`: 114 slots clockwise from 12 o'clock (`ringSlots`); a drilled surah opens to `focusSpan(roots)` (60–150°) around its resting angle and the other 113 share the rest; `focusGrid` gives every root a cell (rows fill inside-out, heaviest centre-out; cell 48/38/30 by root count); `occurrencePositions` stacks ayahs outward, compressed past 380 units. |
+| Labels | `lib/viz/structureMap/labels.ts` `computeLabels`, run when the view settles, never per frame. Names and occurrence tips run along their spokes and are placed by `admitRadialLabels` (exact spoke-vs-spoke test: r·sin Δθ where the radial extents overlap). Root labels sit beside, above or below their dot by `admitLabels` (grid-bucketed boxes, alternatives in order). The commonest roots in view (`HEAVY_ROOTS`, and each overview stack's first) are placed first and may cover a lesser dot; the rest must clear every dot that reads as a mark. Nothing overlaps; more appear as you zoom. On a small screen the ring shows numbers until names fit. |
+| Rendering | `components/visualisations/structureMap/layers.tsx`: `RingLayer` (arcs, bars), `OverviewRootsLayer`, `DrillLayer`, `OccurrenceLayer`, `OverlayLayer` (hover/selection outlines, rings, presence ticks), `LabelLayer`. Labels keep a constant screen size: `--sm-u` (1/zoom) is written on the label and centre groups each zoom frame; CSS multiplies every size by it (`.sm-label`, and `max()` floors on the centre text). |
+| Interaction | JS hit-testing on the geometry (`hitAt`: polar lookup → slot → dot), one pointermove handler, state set only when the target changes. Tooltip positioned imperatively. Click a surah to drill (click it again, or the centre, or Esc to return); click a root to follow it; click an ayah dot to focus that word. d3's double-click zoom is off (`useZoom({ doubleClickZoom: false })`), since clicks toggle. |
+| Motion | Drilling animates the ring opening (`interpolateSlots`, 700 ms, the same as the camera's fit); content layers wait for the ring to settle and fade in. Reduced motion: instant. |
+| viewBox | `-w/2 -h/2 w h`, the element's own pixel size, centred on the ring, so `fitBoundsToView` frames with the full width (a square viewBox on a wide screen framed only the middle square). |
+
+Surah adoption: the shell's surah defaults to 1 and the "Entire Quran" breadcrumb
+sets 1, so an adopted 1 means the whole ring, not a drill into Al-Fatihah; the echo
+of the map's own surah click is ignored. A root still suspends adoption and a new root
+clears the drill (below). Selected occurrence comes from the shared focused token.
+
+### `radial-sura` rendering
+
+`components/visualisations/radialSura/layers.tsx` holds the heavy layers
+(`DetailConnections`, `DetailBars`, `OverviewTicks`, `OverviewArcs`), memoised and fed
+only values that change on a deliberate act (surah, pinned root, selected ayah, a
+zoom threshold crossed) plus a stable handler object that forwards to the latest
+handlers. Hover is drawn on top by the component from a handful of elements: the
+hovered ayah's remaining roots and labels, the hovered root's rings, the hovered
+and active arcs. Before this every hover re-rendered the whole SVG (profiled: 11.5 s
+of a 17 s hover sweep; after: 0.4 s).
+
+- The surah's tokens are filtered from the corpus and keyed on content (count, first
+  and last id, rooted and lemma counts), so a streamed batch for another surah no
+  longer rebuilds this one.
+- Draw-in and fade-in animations run once per element per surah (`useSeen`); the old
+  flag flipped after mount and remounted every connection on the first hover.
+- Long surahs in detail mode draw one arc per ayah pair, commonest roots first,
+  capped at `DETAIL_MESH_ARC_CAP` (1,400), the pinned root's arcs always in; hover and
+  a selected ayah draw from the full set.
+- The centre label keeps its screen size while the ring is fitted out (clamped to
+  the ring's hole).
+- Zooming a long surah was paint-bound, not script-bound (a dev profile of a
+  24-notch wheel burst on Al-Baqarah: 8.3 s of native rendering, next to no JS).
+  Two causes: the invisible hit paths (`.rs-hit`, ~900 in the overview mesh) use
+  `vector-effect: non-scaling-stroke`, so their outlines were rebuilt every frame;
+  they are now `display: none` while a user gesture runs (`.is-moving`, set from
+  `useZoom`'s `onZoom` only when the event has a `sourceEvent`, so a programmatic
+  fit never hides them). And every arc was stroked with an objectBoundingBox SVG
+  gradient, built per path; arcs are now one of the two accents per root
+  (`twoTone`), solid. Together: 8.3 s → 1.5 s for the same burst.
+
+Both maps pass word hovers up through `useRestingHover` (90 ms): the inspector
+re-renders its whole card per hovered word, and a sweep across a ring used to
+re-render it for every ayah passed.
 
 ## Shell anatomy (AppShell)
 
@@ -170,39 +225,27 @@ onboarding localStorage `quran-corpus-onboarding`.
   array re-render per batch — keep per-batch work cheap. Corollary: NEVER mutate
   user-chosen state from data-derived values (root-network's limit clamp ratcheted the
   slider to 5 because the surah-2 stub has 3 roots — clamp at use time via
-  `Math.min(userValue, derivedMax)` instead). The structure map renders a
-  static 114-surah skeleton (angles from `SURAH_NAMES`, fixed from first paint) and
-  reveals root branches per batch with a CSS opacity stagger (once per arrival,
-  tracked in a ref; instant under reduced motion).
-- **Structure-map occurrence mode** (`CorpusArchitectureMap.tsx`, 2026-09-05). Selecting a
-  root turns the map into "where does this word live across the whole Quran": occurrence
-  leaves keep `type: "word_root"` and `originalId` = the root (so every geometry/color/
-  label memo works unchanged) and carry an extra `ayah`. Rules learned building it:
-  the surah-drill adoption of `selectedSurahId` is SKIPPED while a root is active and a
-  NEW root clears an existing drill — otherwise arriving with a root landed on one
-  focused surah with everything else at 0.05, the opposite of the cross-corpus view the
-  map exists for. Occurrence wires ignore the rank/LOD gating (one root's wires ARE the
-  content). Label admission exempts by NODE id here, not root identity — every leaf
-  shares the root, so the root test would exempt them all and admit every label at once.
-  The selected wire is read from the shared focused token (`focusedSura`/`focusedAyah`),
-  never local state, so an ayah picked in the inspector's occurrence list lights the same
-  wire. Hover previews the ayah (debounced 90ms verse fetch), click pins it.
-- **Untangling the structure map** (2026-09-05, same pass). Three separate causes,
-  all worth remembering: (1) `d3.linkRadial` derives control points from the SOURCE's
-  own angle, and the corpus node has none — it sits at radius 0 where `getNodeAngle`
-  falls back to 0 (straight up), so all 114 centre spokes left the middle heading north
-  before curving back to their surah, piling into one knot. Centre spokes are now drawn
-  as straight radial lines (`buildLinkPath`); straight spokes share only the origin and
-  cannot cross. (2) The root fan spreads up to 120° while a surah's slot on the ring is
-  ~3.2°, so in occurrence mode every surah's wires swept across ~38 neighbours.
-  Occurrences separate on the RADIAL axis instead (stacked in ayah order, ~11px apart,
-  band capped at 420px since `viewRadius` grows with the longest offset) and keep a
-  ≤2.2° fan. (3) Label decluttering measured arc length (angle × radius), which is the
-  right axis for a sideways fan and collapses to nothing for a radial stack near the top
-  of the ring — `rootLabelAxisById` switches to radius in occurrence mode.
+  `Math.min(userValue, derivedMax)` instead). The structure map no longer depends on
+  the stream at all (2026-09-28, static concordance payload).
+- **Structure-map occurrence mode** (2026-09-05, carried into the 2026-09-28 rebuild).
+  Selecting a root turns the map into "where does this word live across the whole
+  Quran". The surah-drill adoption of `selectedSurahId` is SKIPPED while a root is active
+  and a NEW root clears an existing drill — otherwise arriving with a root landed on one
+  focused surah, the opposite of the cross-corpus view the map exists for. The selected
+  occurrence is read from the shared focused token (`focusedSura`/`focusedAyah`), never
+  local state, so an ayah picked in the inspector's occurrence list lights the same dot.
+  Hover previews the ayah (debounced 90ms verse fetch), click pins it.
+- **Why the structure map was rebuilt** (2026-09-28). The d3 hierarchy version had
+  accumulated fixes (straight centre spokes, radial occurrence stacks, quantised zoom
+  commits, per-fan 1D label separation) and still: re-rendered all ~8.5k nodes on every
+  throttled zoom commit (15 fps, 111 long tasks zooming with a root selected, 4× CPU);
+  scaled text with the geometry, so labels collided when zoomed; fanned a drilled
+  surah's 585 roots into a comet whose labels piled up; and waited for the full corpus.
+  Separation along one axis per fan cannot stop labels of neighbouring fans colliding;
+  screen-space placement over everything on screen can.
 - **`fitBoundsToView` ignored the viewBox ORIGIN** (fixed 2026-09-05). Every viz draws
   with a `0 0 w h` viewBox except the structure map, which centres its own coordinate
-  system (`-r -r 2r 2r`) for polar geometry. The helper computed its target centre as an
+  system (now `-w/2 -h/2 w h`) for polar geometry. The helper computed its target centre as an
   offset from zero, so every fit on that map — the Focus button included — was shifted by
   `r` and pushed the graph almost entirely off-screen. It now adds `vb.x`/`vb.y`; a no-op
   for the other ten. Any new viz with a centred viewBox depends on this.
@@ -340,6 +383,8 @@ Fixed in `feature/viz-declutter`:
   greedy, ≥15px along the fan, hovered/selected exempt-as-blockers; more labels
   admitted as zoom deepens) → 20-30ms avg, overlap-free labels. Pattern to reuse:
   never re-render per zoom tick; commit LOD state on settle/threshold only.
+- (Both structure-map entries here describe the d3-hierarchy version, replaced
+  2026-09-28 — see the mode's section above.)
 - Structure map was one-shot and heavy → static 114-surah skeleton paints in ~1.2s
   (was 35-65s to first structure on cold loads), root branches stream in per batch
   with a staggered reveal; hover sets memoized, labels view-culled, token-reference

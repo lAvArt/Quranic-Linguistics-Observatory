@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState, useCallback, type MouseEvent } from "react";
+import { useEffect, useRef, useMemo, useState, useCallback, type MouseEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import * as d3 from "@/lib/viz/d3";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,24 @@ import { useZoom } from "@/lib/hooks/useZoom";
 import { useLocale, useTranslations } from "next-intl";
 import { VizExplainerDialog, HelpIcon } from "@/components/ui/VizExplainerDialog";
 import { useVizControl } from "@/lib/hooks/VizControlContext";
-import { motionSafeDuration, motionSafeStagger } from "@/lib/viz/motionPrefs";
+import { motionSafeDuration } from "@/lib/viz/motionPrefs";
+import { usePortalTarget } from "@/lib/hooks/usePortalTarget";
+import { useRestingHover } from "@/lib/hooks/useRestingHover";
+import {
+  DetailBars,
+  DetailConnections,
+  OverviewArcs,
+  OverviewTicks,
+  dimTone,
+  rootLabelFontSize,
+  tickStrokeBase,
+  visibleRootNodesFor,
+  type AyahBar,
+  type AyahRootEntry,
+  type AyahRootNode,
+  type RadialHandlers,
+  type RootConnection,
+} from "./radialSura/layers";
 
 interface RadialSuraMapProps {
   tokens: CorpusToken[];
@@ -36,56 +53,6 @@ interface RadialSuraMapProps {
   lexicalColorMode?: LexicalColorMode;
 }
 
-
-
-interface AyahBar {
-  ayah: number;
-  tokenCount: number;
-  angle: number;
-  barHeight: number;
-  dominantPOS: string;
-  color: string;
-}
-
-interface RootConnection {
-  sourceAyah: number;
-  targetAyah: number;
-  root: string;
-  count: number;
-  color: string;
-}
-
-interface AyahRootEntry {
-  root: string;
-  count: number;
-  globalCount: number;
-  lemmas: string[];
-}
-
-interface AyahRootNode extends AyahRootEntry {
-  x: number;
-  y: number;
-  r: number;
-  labelX: number;
-  labelY: number;
-  baseColor: string;
-}
-
-// Non-matching elements, while a root is highlighted, must stay legible as
-// *that POS/root's own hue* — just quieter — rather than flattening to grey.
-// Grey would make the legend a lie (on-canvas colors no longer match what the
-// legend documents); a desaturated, lower-opacity version of the true hue
-// keeps every bar/node reading as "still that part of speech / root" while
-// clearly signalling "not the current match".
-const DIM_OPACITY = 0.38;
-const DIM_SATURATION_RETAIN = 0.4; // keep 40% saturation => ~60% reduction
-
-function dimTone(color: string, opacity: number = DIM_OPACITY): string {
-  const hsl = d3.hsl(color);
-  hsl.s *= DIM_SATURATION_RETAIN;
-  hsl.opacity = opacity;
-  return hsl.toString();
-}
 
 // ---------------------------------------------------------------------------
 // Level of detail: large surahs render one hairline tick per ayah at rest
@@ -113,6 +80,9 @@ const DETAIL_ZOOM_THRESHOLD = 1.3;
 // path mesh is not. Hover/selection emphasis is drawn from the FULL
 // connection set on top, so the response is identical at every zoom.
 const OVERVIEW_MESH_ARC_CAP = 900;
+// The same web in detail mode for a long surah: one arc per ayah pair, capped
+// a little higher since only a sector is on screen by then.
+const DETAIL_MESH_ARC_CAP = 1400;
 
 // Overview shares detail mode's ring geometry (same innerRadius, same per-
 // ayah angles) so crossing the zoom threshold swaps tick <-> bar IN PLACE —
@@ -163,11 +133,21 @@ export default function RadialSuraMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const [zoomScale, setZoomScale] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
+  // While a pan or zoom runs, the invisible hit paths are switched off
+  // (`.is-moving`, set straight on the element): hundreds of non-scaling
+  // strokes had their outlines rebuilt on every frame of a gesture, for
+  // targets nobody can hover mid-drag.
   const { svgRef, gRef, fitToView, fitBounds, zoomBy } = useZoom<SVGSVGElement>({
     minScale: 0.3,
     maxScale: 6,
     ready: isMounted,
-    onZoomEnd: (transform) => setZoomScale(transform.k),
+    onZoom: (_transform, event) => {
+      if (event?.sourceEvent) svgRef.current?.classList.add("is-moving");
+    },
+    onZoomEnd: (transform) => {
+      svgRef.current?.classList.remove("is-moving");
+      setZoomScale(transform.k);
+    },
   });
   const [showHelp, setShowHelp] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 800, height: 700 });
@@ -182,9 +162,6 @@ export default function RadialSuraMap({
   // it were clicked; clicking pins it (fullAyahText). Debounced so sweeping
   // the pointer across hundreds of ticks doesn't fire a fetch per tick.
   const [hoverAyahText, setHoverAyahText] = useState<string | null>(null);
-  const prevSuraIdRef = useRef<number | null>(null);
-  const shouldAnimateConnections = prevSuraIdRef.current === null || prevSuraIdRef.current !== suraId;
-  const shouldAnimateBars = shouldAnimateConnections;
   // Captures whether a root was already selected the moment this map first
   // mounted (e.g. a deep link) — see the initial-focus effect below.
   const initialHighlightRootRef = useRef<string | null>(highlightRoot ?? null);
@@ -193,6 +170,7 @@ export default function RadialSuraMap({
 
 
   const { isLeftSidebarOpen } = useVizControl();
+  const portalTarget = usePortalTarget("viz-sidebar-portal");
 
   useEffect(() => {
     setIsMounted(true);
@@ -204,10 +182,6 @@ export default function RadialSuraMap({
     setHoveredAyah(null);
     setHoveredRoot(null);
     setHoveredConnection(null);
-  }, [suraId]);
-
-  useEffect(() => {
-    prevSuraIdRef.current = suraId;
   }, [suraId]);
 
   useEffect(() => {
@@ -255,6 +229,24 @@ export default function RadialSuraMap({
     return suraNameArabic;
   }, [suraNameArabic]);
 
+  // Only this surah's tokens, and only a new array when they actually change.
+  // `tokens` is the whole corpus and gets a new reference with every streamed
+  // batch; keyed on it, every batch for ANY surah rebuilt this surah's bars,
+  // roots and arcs and re-rendered the lot. Root and lemma data can land
+  // after the tokens themselves, so the key counts those too.
+  const suraTokenList = useMemo(() => tokens.filter((token) => token.sura === suraId), [tokens, suraId]);
+  const suraTokenKey = useMemo(() => {
+    let rooted = 0;
+    let lemmas = 0;
+    for (const token of suraTokenList) {
+      if (token.root) rooted++;
+      if (token.lemma) lemmas++;
+    }
+    const n = suraTokenList.length;
+    return `${suraId}:${n}:${suraTokenList[0]?.id ?? ""}:${suraTokenList[n - 1]?.id ?? ""}:${rooted}:${lemmas}`;
+  }, [suraTokenList, suraId]);
+  const suraTokens = useMemo(() => suraTokenList, [suraTokenKey]);
+
   // Process tokens into visualization data
   const {
     ayahBars,
@@ -275,7 +267,7 @@ export default function RadialSuraMap({
     const rootTokenTotals = new Map<string, number>();
 
     // Group tokens by ayah
-    for (const token of tokens) {
+    for (const token of suraTokens) {
       if (token.sura !== suraId) continue;
       if (!ayahTokens.has(token.ayah)) {
         ayahTokens.set(token.ayah, []);
@@ -450,7 +442,7 @@ export default function RadialSuraMap({
       rootTokenTotals,
       maxRootTokenCount,
     };
-  }, [tokens, suraId, highlightRoot, themeColors.accent, theme, lexicalColorMode]);
+  }, [suraTokens, suraId, highlightRoot, themeColors.accent, theme, lexicalColorMode]);
 
   // Level-of-detail switch: word count decides whether this surah is even a
   // candidate for overview mode; zoom scale decides whether the user has
@@ -516,8 +508,7 @@ export default function RadialSuraMap({
     const byAyah = new Map<number, string>();
     const byAyahRoot = new Map<string, string>();
 
-    for (const token of tokens) {
-      if (token.sura !== suraId) continue;
+    for (const token of suraTokens) {
       if (!byAyah.has(token.ayah)) {
         byAyah.set(token.ayah, token.id);
       }
@@ -533,7 +524,7 @@ export default function RadialSuraMap({
       ayahTokenIdByAyah: byAyah,
       ayahTokenIdByAyahRoot: byAyahRoot,
     };
-  }, [tokens, suraId]);
+  }, [suraTokens]);
 
   const getRootBaseColor = useCallback((root: string, globalCount: number) => {
     if (lexicalColorMode === "frequency") {
@@ -607,6 +598,7 @@ export default function RadialSuraMap({
         : Number.POSITIVE_INFINITY;
   const showContextRootLabels = rootDetailLevel >= 2;
   const showAllRootLabels = rootDetailLevel >= 3;
+  const ayahLabelLevel: 0 | 1 | 2 = zoomScale >= 1.9 ? 2 : zoomScale >= DETAIL_ZOOM_THRESHOLD ? 1 : 0;
 
   // Generate arc path for connections
   const generateConnectionPath = useCallback(
@@ -1010,38 +1002,42 @@ export default function RadialSuraMap({
     // dimming (not hiding) the non-matching ones so the surah's overall
     // connective structure stays legible instead of vanishing behind a single
     // isolated arc. See the per-connection opacity logic in the render loop.
-    return rootConnections.filter((conn) => {
-      if (selectedAyah && conn.sourceAyah !== selectedAyah && conn.targetAyah !== selectedAyah) return false;
-      return true;
-    });
-  }, [rootConnections, selectedAyah]);
+    if (selectedAyah) {
+      return rootConnections.filter((conn) => conn.sourceAyah === selectedAyah || conn.targetAyah === selectedAyah);
+    }
+    if (!isLargeSurah) return rootConnections;
+    // A long surah's full web, zoomed in, is thousands of arcs — many drawn
+    // twice or more, where several roots join the same two ayahs — and read
+    // as a hairball. One arc per ayah pair, the commonest roots first, capped
+    // like the overview mesh; the pinned root's arcs always stay. Hover and a
+    // selected ayah still draw from the full set.
+    const ordered = [...rootConnections].sort(
+      (a, b) =>
+        Number(b.root === highlightRoot) - Number(a.root === highlightRoot) ||
+        (rootTokenTotals.get(b.root) ?? 0) - (rootTokenTotals.get(a.root) ?? 0)
+    );
+    const seen = new Set<string>();
+    const out: RootConnection[] = [];
+    for (const conn of ordered) {
+      const key = `${conn.sourceAyah}-${conn.targetAyah}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(conn);
+      if (out.length >= DETAIL_MESH_ARC_CAP && conn.root !== highlightRoot) break;
+    }
+    return out;
+  }, [rootConnections, selectedAyah, isLargeSurah, highlightRoot, rootTokenTotals]);
 
-  const barsForRender = useMemo(() => {
-    return barsWithGeometry.map((entry) => {
-      const isFocusedAyah =
-        entry.bar.ayah === selectedAyah ||
-        entry.bar.ayah === hoveredAyah ||
-        highlightAyahSet.has(entry.bar.ayah);
-
-      let visibleRootNodes = entry.rootNodes;
-      if (!isFocusedAyah && Number.isFinite(maxRootsPerAyahVisible)) {
-        visibleRootNodes = entry.rootNodes.slice(0, maxRootsPerAyahVisible);
-      }
-
-      if (highlightRoot) {
-        const highlightedNode = entry.rootNodes.find((node) => node.root === highlightRoot);
-        if (highlightedNode && !visibleRootNodes.some((node) => node.root === highlightRoot)) {
-          visibleRootNodes = [...visibleRootNodes, highlightedNode];
-        }
-      }
-
-      return {
-        ...entry,
-        isFocusedAyah,
-        visibleRootNodes,
-      };
-    });
-  }, [barsWithGeometry, selectedAyah, hoveredAyah, highlightAyahSet, maxRootsPerAyahVisible, highlightRoot]);
+  // Hover and the active ayah's arcs, drawn over the (memoised) web — from
+  // the full set, so an arc the long-surah cap dropped still lights up.
+  const detailEmphasis = useMemo(() => {
+    if (isOverviewMode || (!hoveredRoot && !activeAyah)) return [];
+    return rootConnections.filter(
+      (conn) =>
+        (!!hoveredRoot && conn.root === hoveredRoot && conn.root !== highlightRoot) ||
+        (!!activeAyah && (conn.sourceAyah === activeAyah || conn.targetAyah === activeAyah))
+    );
+  }, [isOverviewMode, hoveredRoot, activeAyah, rootConnections, highlightRoot]);
 
   const handleAyahSelect = useCallback((ayah: number, preferredRoot?: string) => {
     setSelectedAyah(ayah);
@@ -1178,15 +1174,16 @@ export default function RadialSuraMap({
     return overviewTicksByAyah.has(ayah) ? ayah : null;
   }, [gRef, ayahCount, centerX, centerY, overviewTicksByAyah]);
 
+  const emitTokenHover = useRestingHover(onTokenHover);
   const handleBarHover = useCallback((ayah: number | null) => {
     setHoveredAyah((prev) => (prev === ayah ? prev : ayah));
     if (ayah) {
       const tokenId = ayahTokenIdByAyah.get(ayah);
-      if (tokenId) onTokenHover(tokenId);
+      if (tokenId) emitTokenHover(tokenId);
     } else {
-      onTokenHover(null);
+      emitTokenHover(null);
     }
-  }, [ayahTokenIdByAyah, onTokenHover]);
+  }, [ayahTokenIdByAyah, emitTokenHover]);
 
   // The overview hit ring unmounts on the tick -> bar swap (and vice versa)
   // without firing pointerleave, which left the hovered ayah stuck on the
@@ -1196,8 +1193,8 @@ export default function RadialSuraMap({
     lastPointerAyahRef.current = null;
     setHoveredAyah(null);
     setHoveredRoot(null);
-    onTokenHover(null);
-  }, [isOverviewMode, onTokenHover]);
+    emitTokenHover(null);
+  }, [isOverviewMode, emitTokenHover]);
 
   const handleRootNodeHover = useCallback((ayah: number | null, root: string | null) => {
     setHoveredRoot((prev) => (prev === root ? prev : root));
@@ -1252,12 +1249,187 @@ export default function RadialSuraMap({
     return remainder > 0 ? `${preview.join(" · ")} +${remainder}` : preview.join(" · ");
   }, []);
 
-  const allowConnectionAnimation = shouldAnimateConnections && renderedConnections.length <= 280;
-  const allowBarAnimation = shouldAnimateBars && ayahCount <= 120;
+  const animateConnections = renderedConnections.length <= 280;
+  const animateBars = ayahCount <= 120;
+
+  // The layers hold these for good; each forwards to the latest handler, so
+  // a hover never hands the memoised layers a new prop.
+  const handlerImpl: RadialHandlers = {
+    barHover: handleBarHover,
+    ayahClick: (ayah) => {
+      setSelectedConnection(null);
+      setHoveredConnection(null);
+      handleAyahSelect(ayah);
+    },
+    rootHover: handleRootNodeHover,
+    rootClick: handleRootNodeSelect,
+    connHover: handleConnectionHover,
+    connClick: handleConnectionSelect,
+    tickMove: (event) => {
+      const ayah = ayahFromPointerEvent(event);
+      if (lastPointerAyahRef.current !== ayah) {
+        lastPointerAyahRef.current = ayah;
+        handleBarHover(ayah);
+      }
+    },
+    tickLeave: () => {
+      lastPointerAyahRef.current = null;
+      handleBarHover(null);
+    },
+    tickClick: (event) => {
+      const ayah = ayahFromPointerEvent(event);
+      if (!ayah) return;
+      event.stopPropagation();
+      setSelectedConnection(null);
+      setHoveredConnection(null);
+      handleOverviewTickSelect(ayah);
+    },
+  };
+  const handlerRef = useRef(handlerImpl);
+  useEffect(() => {
+    handlerRef.current = handlerImpl;
+  });
+  const handlers = useMemo<RadialHandlers>(
+    () => ({
+      barHover: (ayah) => handlerRef.current.barHover(ayah),
+      ayahClick: (ayah) => handlerRef.current.ayahClick(ayah),
+      rootHover: (ayah, root) => handlerRef.current.rootHover(ayah, root),
+      rootClick: (event, ayah, root) => handlerRef.current.rootClick(event, ayah, root),
+      connHover: (conn) => handlerRef.current.connHover(conn),
+      connClick: (event, conn) => handlerRef.current.connClick(event, conn),
+      tickMove: (event) => handlerRef.current.tickMove(event),
+      tickLeave: () => handlerRef.current.tickLeave(),
+      tickClick: (event) => handlerRef.current.tickClick(event),
+    }),
+    []
+  );
+
+  // The centre label keeps its on-screen size while the ring is fitted out
+  // (it read as a smudge for small surahs at ~0.5x), without outgrowing the
+  // ring's hole; zoomed in past 1x it grows with the drawing.
+  const centerTitleScale = isOverviewMode
+    ? Math.min(3.4, 1 / Math.max(0.15, zoomScale))
+    : zoomScale < 1
+      ? Math.min(1 / Math.max(0.15, zoomScale), innerRadius / 130)
+      : 1;
+
+  const dark = theme === "dark";
+  const highlightedRootColor = dark ? SELECTION_RING : "#1f1c19";
+
+  const detailHoverOverlay = (() => {
+    if (isOverviewMode || (hoveredAyah == null && !hoveredRoot)) return null;
+    const halo = dark ? "rgba(6, 9, 18, 0.9)" : "rgba(248, 246, 238, 0.92)";
+    const labelFont = rootLabelFontSize(showAllRootLabels, compactLayout);
+    const anchorFor = (angleRad: number) => (angleRad > Math.PI / 2 && angleRad < (3 * Math.PI) / 2 ? "end" : "start");
+    const out: ReactNode[] = [];
+    const isFocusedAtRest = (ayah: number) => ayah === selectedAyah || highlightAyahSet.has(ayah);
+
+    // The hovered ayah shows every root, labelled, as a click would.
+    const hovered = hoveredAyah != null && !isFocusedAtRest(hoveredAyah) ? barsGeometryByAyah.get(hoveredAyah) : undefined;
+    if (hovered) {
+      const atRest = visibleRootNodesFor(hovered.rootNodes, false, maxRootsPerAyahVisible, highlightRoot ?? null);
+      const anchor = anchorFor(hovered.angleRad);
+      hovered.rootNodes.forEach((node) => {
+        const isDimmed = !!highlightRoot && node.root !== highlightRoot;
+        if (!atRest.includes(node)) {
+          out.push(
+            <circle
+              key={`hx-${node.root}`}
+              cx={node.x}
+              cy={node.y}
+              r={node.r}
+              fill="transparent"
+              stroke={isDimmed ? dimTone(node.baseColor, 1) : node.baseColor}
+              strokeWidth={1.8}
+              opacity={isDimmed ? 0.38 : 0.9}
+              pointerEvents="all"
+              style={{ cursor: "pointer" }}
+              onMouseEnter={() => handleRootNodeHover(hovered.bar.ayah, node.root)}
+              onMouseLeave={() => handleRootNodeHover(null, null)}
+              onClick={(event) => handleRootNodeSelect(event, hovered.bar.ayah, node.root)}
+            />
+          );
+        }
+        const labelledAtRest = node.root === highlightRoot || (showAllRootLabels && node.r >= 1.75 && atRest.includes(node));
+        if (showContextRootLabels && node.r >= 1.55 && !labelledAtRest && node.root !== hoveredRoot) {
+          out.push(
+            <text
+              key={`hl-${node.root}`}
+              x={node.labelX}
+              y={node.labelY}
+              textAnchor={anchor}
+              className="arabic-text"
+              fill={isDimmed ? (dark ? "rgba(255,255,255,0.32)" : "rgba(31, 28, 25, 0.32)") : dark ? "rgba(255,255,255,0.78)" : "rgba(31, 28, 25, 0.78)"}
+              fontSize={labelFont}
+              fontWeight={500}
+              pointerEvents="none"
+            >
+              {node.root}
+            </text>
+          );
+        }
+      });
+      const labelRadius = innerRadius + hovered.bar.barHeight + (compactLayout ? 14 : 18);
+      out.push(
+        <text
+          key="h-ayah"
+          x={centerX + Math.cos(hovered.angleRad) * labelRadius}
+          y={centerY + Math.sin(hovered.angleRad) * labelRadius}
+          textAnchor={anchor}
+          fill={dark ? "rgba(255,255,255,0.95)" : "rgba(31, 28, 25, 0.95)"}
+          fontSize={compactLayout ? "9.5" : "11.5"}
+          fontWeight={600}
+          stroke={halo}
+          strokeWidth={3}
+          paintOrder="stroke fill"
+          pointerEvents="none"
+        >
+          {hovered.bar.ayah}
+        </text>
+      );
+    }
+
+    // The hovered root, wherever it is drawn: a ring and its name.
+    if (hoveredRoot && hoveredRoot !== highlightRoot) {
+      const rings: ReactNode[] = [];
+      barsWithGeometry.forEach((entry) => {
+        const focused = isFocusedAtRest(entry.bar.ayah) || entry === hovered;
+        const drawn = visibleRootNodesFor(entry.rootNodes, focused, maxRootsPerAyahVisible, highlightRoot ?? null);
+        const node = drawn.find((n) => n.root === hoveredRoot);
+        if (!node) return;
+        rings.push(
+          <g key={`hr-${entry.bar.ayah}`}>
+            <circle cx={node.x} cy={node.y} r={node.r + 6} fill="none" stroke={SELECTION_RING} strokeWidth={1.6} opacity={0.95} />
+            <text
+              x={node.labelX}
+              y={node.labelY}
+              textAnchor={anchorFor(entry.angleRad)}
+              className="arabic-text"
+              fill={highlightedRootColor}
+              fontSize={labelFont}
+              fontWeight={600}
+              stroke={halo}
+              strokeWidth={1.8}
+              paintOrder="stroke fill"
+            >
+              {node.root}
+            </text>
+          </g>
+        );
+      });
+      out.push(
+        <g key="h-root" filter={rings.length <= 30 ? "url(#selectionGlow)" : undefined}>
+          {rings}
+        </g>
+      );
+    }
+    return <g className="radial-hover" pointerEvents="none">{out}</g>;
+  })();
+  const bandOuter = innerRadius * (OVERVIEW_TICK_MAX_RATIO + OVERVIEW_TICK_MATCH_BONUS_RATIO);
 
   return (
     <section className="panel" data-theme={theme} style={{ width: "100%", height: "100%", position: "relative" }}>
-      {isMounted && document.getElementById('viz-sidebar-portal') && createPortal(
+      {portalTarget && createPortal(
         <>
 
 
@@ -1502,7 +1674,7 @@ export default function RadialSuraMap({
                   style={{
                     background:
                       lexicalColorMode === "theme"
-                        ? "url(#connectionGrad)"
+                        ? `linear-gradient(90deg, ${themeColors.accent}, ${themeColors.accentSecondary}, ${themeColors.accent})`
                         : lexicalColorMode === "frequency"
                           ? `linear-gradient(90deg, ${getFrequencyColor(0.2, theme)}, ${getFrequencyColor(0.9, theme)})`
                           : `linear-gradient(90deg, ${getIdentityColor("radial-a", theme)}, ${getIdentityColor("radial-b", theme)})`,
@@ -1517,7 +1689,7 @@ export default function RadialSuraMap({
             </div>
           </div>
         </>,
-        document.getElementById('viz-sidebar-portal')!
+        portalTarget
       )}
 
       {/* B) Floating "selected" pill — V2 Observatory design */}
@@ -1609,12 +1781,6 @@ export default function RadialSuraMap({
           >
             <g ref={gRef}>
               <defs>
-                {/* Gradient for connections */}
-                <linearGradient id="connectionGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor={themeColors.accent} stopOpacity="0.6" />
-                  <stop offset="50%" stopColor={themeColors.accentSecondary} stopOpacity="0.4" />
-                  <stop offset="100%" stopColor={themeColors.accent} stopOpacity="0.6" />
-                </linearGradient>
 
                 <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stopColor={themeColors.glowColors.primary} stopOpacity="0.2" />
@@ -1697,9 +1863,7 @@ export default function RadialSuraMap({
                   which never enters overview) renders exactly as before. */}
               <g
                 className="center-title"
-                transform={`translate(${centerX}, ${centerY})${
-                  isOverviewMode ? ` scale(${Math.min(3.4, 1 / Math.max(0.15, zoomScale)).toFixed(4)})` : ""
-                }`}
+                transform={`translate(${centerX}, ${centerY}) scale(${centerTitleScale.toFixed(4)})`}
               >
                 <circle r={80} fill="url(#centerGlow)" />
                 <text
@@ -1757,152 +1921,67 @@ export default function RadialSuraMap({
                 )}
               </g>
 
-              {/* Root connections (flowing curves inside the circle), detail
-                  mode: every connection with hover/selection emphasis. In
-                  overview the same web is drawn by the capped mesh +
-                  emphasis layers below, so nothing is zoom-gated but the
-                  per-word bars. */}
+              {/* Root connections, detail mode: the web (memoised), then
+                  the hovered root's and the active ayah's arcs on top. */}
               {!isOverviewMode && (
-              <g className="connections">
-                {renderedConnections.map((conn, idx) => {
-                  const isActiveAyah =
-                    !!activeAyah && (conn.sourceAyah === activeAyah || conn.targetAyah === activeAyah);
-                  const countColor = isActiveAyah ? activeRootColorMap?.get(conn.root) ?? null : null;
-                  const isHighlighted = highlightRoot
-                    ? (conn.root === highlightRoot || hoveredRoot === conn.root)
-                    : (hoveredRoot === conn.root || isActiveAyah);
-                  // With a root highlighted, other roots' connections dim further
-                  // (0.2) than the default unfiltered view (0.3) — the highlighted
-                  // root's own arcs read as the clear signal, while the rest of the
-                  // surah's root web stays faintly present instead of disappearing.
-                  const dimmedOpacity = highlightRoot ? 0.2 : 0.3;
-                  const pathKey = `${conn.sourceAyah}-${conn.targetAyah}`;
-                  const pathD = connectionPaths.get(pathKey) ?? "";
-
-                  const strokeColor = countColor ??
-                    (isHighlighted
-                      ? themeColors.accent
-                      : lexicalColorMode === "theme"
-                        ? "url(#connectionGrad)"
-                        : conn.color);
-
-                  return (
-                    <g key={`${conn.sourceAyah}-${conn.targetAyah}-${conn.root}`}>
-                      {allowConnectionAnimation ? (
-                        <motion.path
-                          d={pathD}
-                          className={`connection ${isHighlighted ? "highlighted" : ""}`}
-                          stroke={strokeColor}
-                          strokeWidth={isHighlighted ? 2.5 : 1.5}
-                          fill="none"
-                          pointerEvents="none"
-                          initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: isHighlighted ? 1 : dimmedOpacity }}
-                          transition={{ duration: motionSafeDuration(1100) / 1000, delay: motionSafeStagger(idx, 12) / 1000 }}
-                          filter={isHighlighted ? "url(#glow)" : undefined}
-                          onMouseEnter={() => handleConnectionHover(conn)}
-                          onMouseLeave={() => handleConnectionHover(null)}
-                        />
-                      ) : (
-                        <path
-                          d={pathD}
-                          className={`connection ${isHighlighted ? "highlighted" : ""}`}
-                          stroke={strokeColor}
-                          strokeWidth={isHighlighted ? 2.5 : 1.5}
-                          style={{ opacity: isHighlighted ? 1 : dimmedOpacity }}
-                          fill="none"
-                          pointerEvents="none"
-                          filter={isHighlighted ? "url(#glow)" : undefined}
-                          onMouseEnter={() => handleConnectionHover(conn)}
-                          onMouseLeave={() => handleConnectionHover(null)}
-                        />
-                      )}
+                <DetailConnections
+                  key={suraId}
+                  connections={renderedConnections}
+                  paths={connectionPaths}
+                  highlightRoot={highlightRoot ?? null}
+                  lexicalTheme={lexicalColorMode === "theme"}
+                  accent={themeColors.accent}
+                  accentSecondary={themeColors.accentSecondary}
+                  animate={animateConnections}
+                  handlers={handlers}
+                />
+              )}
+              {!isOverviewMode && detailEmphasis.length > 0 && (
+                <g className="connections connections-emphasis" pointerEvents="none">
+                  {detailEmphasis.map((conn) => {
+                    const touchesActive = !!activeAyah && (conn.sourceAyah === activeAyah || conn.targetAyah === activeAyah);
+                    return (
                       <path
-                        d={pathD}
-                        stroke="transparent"
-                        strokeWidth={12}
+                        key={`${conn.sourceAyah}-${conn.targetAyah}-${conn.root}`}
+                        d={connectionPaths.get(`${conn.sourceAyah}-${conn.targetAyah}`) ?? ""}
+                        className="connection highlighted"
+                        stroke={(touchesActive ? activeRootColorMap?.get(conn.root) : null) ?? themeColors.accent}
+                        strokeWidth={2.5}
                         fill="none"
-                        pointerEvents="stroke"
-                        style={{ cursor: "pointer" }}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onMouseEnter={() => handleConnectionHover(conn)}
-                        onMouseLeave={() => handleConnectionHover(null)}
-                        onClick={(event) => handleConnectionSelect(event, conn)}
+                        filter={detailEmphasis.length <= 40 ? "url(#glow)" : undefined}
                       />
-                    </g>
-                  );
-                })}
-              </g>
+                    );
+                  })}
+                </g>
               )}
 
-              {/* Overview mesh: the faint root web at every zoom level (no
-                  stage cliff) — see OVERVIEW_MESH_ARC_CAP. */}
+              {/* Overview: the faint web at every zoom (see OVERVIEW_MESH_ARC_CAP),
+                  quietened as a group while something is pointed at. */}
               {isOverviewMode && overviewMeshConnections.length > 0 && (
-                <g className="overview-connections overview-mesh">
-                  {overviewMeshConnections.map(({ key, d, conn }) => (
-                    <g key={key}>
-                      <path
-                        d={d}
-                        className="connection"
-                        stroke={lexicalColorMode === "theme" ? "url(#connectionGrad)" : conn.color}
-                        strokeWidth={Math.max(0.8, innerRadius * 0.0016)}
-                        fill="none"
-                        pointerEvents="none"
-                        style={{ opacity: hoveredRoot || activeAyah ? 0.12 : 0.3 }}
-                      />
-                      {/* Invisible hit target — non-scaling so it stays a
-                          comfortable ~14 screen-px whatever the zoom, making the
-                          hairline arcs clickable even at the fitted-out overview. */}
-                      <path
-                        d={d}
-                        stroke="transparent"
-                        strokeWidth={14}
-                        vectorEffect="non-scaling-stroke"
-                        fill="none"
-                        pointerEvents="stroke"
-                        style={{ cursor: "pointer" }}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onMouseEnter={() => handleConnectionHover(conn)}
-                        onMouseLeave={() => handleConnectionHover(null)}
-                        onClick={(event) => handleConnectionSelect(event, conn)}
-                      />
-                    </g>
-                  ))}
+                <g style={{ opacity: hoveredRoot || activeAyah ? 0.4 : 1 }}>
+                  <OverviewArcs
+                    arcs={overviewMeshConnections}
+                    variant="mesh"
+                    strokeWidth={Math.max(0.8, innerRadius * 0.0016)}
+                    lexicalTheme={lexicalColorMode === "theme"}
+                    accent={themeColors.accent}
+                    accentSecondary={themeColors.accentSecondary}
+                    handlers={handlers}
+                  />
                 </g>
               )}
 
-              {/* Overview highlight web: the searched root's arcs stay
-                  visible at the zoomed-out level — this is the one signal
-                  the overview was hiding entirely. */}
+              {/* Overview highlight web: the pinned root's arcs stay visible zoomed out. */}
               {isOverviewMode && overviewHighlightConnections.length > 0 && (
-                <g className="overview-connections">
-                  {overviewHighlightConnections.map(({ key, d, conn }) => (
-                    <g key={key}>
-                      <path
-                        d={d}
-                        className="connection"
-                        stroke={themeColors.accent}
-                        strokeWidth={Math.max(1, innerRadius * 0.002)}
-                        fill="none"
-                        pointerEvents="none"
-                        style={{ opacity: 0.45 }}
-                      />
-                      <path
-                        d={d}
-                        stroke="transparent"
-                        strokeWidth={14}
-                        vectorEffect="non-scaling-stroke"
-                        fill="none"
-                        pointerEvents="stroke"
-                        style={{ cursor: "pointer" }}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onMouseEnter={() => handleConnectionHover(conn)}
-                        onMouseLeave={() => handleConnectionHover(null)}
-                        onClick={(event) => handleConnectionSelect(event, conn)}
-                      />
-                    </g>
-                  ))}
-                </g>
+                <OverviewArcs
+                  arcs={overviewHighlightConnections}
+                  variant="highlight"
+                  strokeWidth={Math.max(1, innerRadius * 0.002)}
+                  lexicalTheme={lexicalColorMode === "theme"}
+                  accent={themeColors.accent}
+                  accentSecondary={themeColors.accentSecondary}
+                  handlers={handlers}
+                />
               )}
 
               {/* Overview emphasis: hovered root / active ayah arcs, on top of
@@ -1927,347 +2006,64 @@ export default function RadialSuraMap({
               {/* Ayah bars radiating outward (detail mode), or one hairline
                   tick per ayah (overview mode) — see isOverviewMode above. */}
               {isOverviewMode ? (
-                <g className="ayah-ticks">
-                  {(() => {
-                    // Stroke widths scale with the ring like tick lengths do,
-                    // landing at ~1-2 screen px at the fitted-out overview
-                    // zoom — the mood-board hairline. Hover/emphasis states
-                    // widen relative to that same base.
-                    const tickStrokeBase = Math.max(1.6, innerRadius * 0.0035);
-                    const bandOuter = innerRadius * (OVERVIEW_TICK_MAX_RATIO + OVERVIEW_TICK_MATCH_BONUS_RATIO);
+                <>
+                  <OverviewTicks
+                    ticks={overviewTicks}
+                    ticksByAyah={overviewTicksByAyah}
+                    selectedAyah={selectedAyah}
+                    ayahCount={ayahCount}
+                    innerRadius={innerRadius}
+                    centerX={centerX}
+                    centerY={centerY}
+                    bandOuter={bandOuter}
+                    accent={themeColors.accent}
+                    muted={themeColors.textColors.muted}
+                    handlers={handlers}
+                  />
+                  {hoveredAyah != null && hoveredAyah !== selectedAyah && (() => {
+                    const tick = overviewTicksByAyah.get(hoveredAyah);
+                    if (!tick) return null;
                     return (
-                      <>
-                        {overviewTicks.map((tick) => {
-                          const isSelected = selectedAyah === tick.ayah;
-                          const isHovered = hoveredAyah === tick.ayah;
-                          return (
-                            <line
-                              key={tick.ayah}
-                              x1={tick.startX}
-                              y1={tick.startY}
-                              x2={tick.endX}
-                              y2={tick.endY}
-                              stroke={isSelected ? themeColors.accent : tick.color}
-                              strokeWidth={
-                                isSelected || isHovered
-                                  ? tickStrokeBase * 2
-                                  : tick.isMatch
-                                    ? tickStrokeBase * 1.6
-                                    : tickStrokeBase
-                              }
-                              strokeLinecap="round"
-                              filter={isSelected ? "url(#glow)" : undefined}
-                              pointerEvents="none"
-                            />
-                          );
-                        })}
-                        {/* Ayah-number milestones just inside the ring so the
-                            overview carries scale/orientation (which part of
-                            the surah am I looking at?) without any zoom. */}
-                        {(() => {
-                          const step = ayahCount > 200 ? 25 : ayahCount > 80 ? 20 : 10;
-                          const milestones: number[] = [1];
-                          for (let a = step; a <= ayahCount; a += step) milestones.push(a);
-                          const labelRadius = innerRadius * 0.94;
-                          const fontSize = Math.max(9, innerRadius * 0.02);
-                          return milestones.map((ayah) => {
-                            const tick = overviewTicksByAyah.get(ayah);
-                            if (!tick) return null;
-                            return (
-                              <text
-                                key={`ayah-label-${ayah}`}
-                                x={centerX + Math.cos(tick.angleRad) * labelRadius}
-                                y={centerY + Math.sin(tick.angleRad) * labelRadius}
-                                textAnchor="middle"
-                                dominantBaseline="central"
-                                fill={themeColors.textColors.muted}
-                                fontSize={fontSize}
-                                pointerEvents="none"
-                                style={{ opacity: 0.75, fontVariantNumeric: "tabular-nums" }}
-                              >
-                                {ayah}
-                              </text>
-                            );
-                          });
-                        })()}
-                        {/* Single invisible hit band over the whole tick ring
-                            (see ayahFromPointerEvent). pointerdown is NOT
-                            stopped, so d3-zoom drag-panning still starts here. */}
-                        <circle
-                          className="ayah-tick-hit"
-                          cx={centerX}
-                          cy={centerY}
-                          r={innerRadius + bandOuter / 2}
-                          fill="none"
-                          stroke="transparent"
-                          strokeWidth={bandOuter + innerRadius * 0.08}
-                          pointerEvents="stroke"
-                          style={{ cursor: "pointer" }}
-                          onPointerMove={(event) => {
-                            const ayah = ayahFromPointerEvent(event);
-                            if (lastPointerAyahRef.current !== ayah) {
-                              lastPointerAyahRef.current = ayah;
-                              handleBarHover(ayah);
-                            }
-                          }}
-                          onPointerLeave={() => {
-                            lastPointerAyahRef.current = null;
-                            handleBarHover(null);
-                          }}
-                          onClick={(event) => {
-                            const ayah = ayahFromPointerEvent(event);
-                            if (!ayah) return;
-                            event.stopPropagation();
-                            setSelectedConnection(null);
-                            setHoveredConnection(null);
-                            handleOverviewTickSelect(ayah);
-                          }}
-                        />
-                      </>
+                      <line
+                        x1={tick.startX}
+                        y1={tick.startY}
+                        x2={tick.endX}
+                        y2={tick.endY}
+                        stroke={tick.color}
+                        strokeWidth={tickStrokeBase(innerRadius) * 2}
+                        strokeLinecap="round"
+                        pointerEvents="none"
+                      />
                     );
                   })()}
-                </g>
+                </>
               ) : (
-              <g className="ayah-bars">
-                {barsForRender.map(({ bar, angleRad, startX, startY, endX, endY, visibleRootNodes, isFocusedAyah }, barIndex) => {
-                  const isSelected = selectedAyah === bar.ayah;
-                  const labelAnchor = angleRad > Math.PI / 2 && angleRad < (3 * Math.PI) / 2 ? "end" : "start";
-
-                  const barContent = (
-                    <>
-                      <line
-                        x1={startX}
-                        y1={startY}
-                        x2={endX}
-                        y2={endY}
-                        className="bar colored"
-                        stroke={isSelected ? themeColors.accent : bar.color}
-                        strokeWidth={isSelected ? barStrokeWidth + 1.4 : barStrokeWidth}
-                        strokeLinecap="round"
-                        filter={isSelected ? "url(#strongGlow)" : undefined}
-                        style={{ cursor: "pointer" }}
-                        onMouseEnter={() => handleBarHover(bar.ayah)}
-                        onMouseLeave={() => handleBarHover(null)}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedConnection(null);
-                          setHoveredConnection(null);
-                          handleAyahSelect(bar.ayah);
-                        }}
-                      />
-                      {visibleRootNodes.map((node, nodeIndex) => {
-                        const isRootHighlighted = hoveredRoot === node.root || highlightRoot === node.root;
-                        const isDimmed = !!highlightRoot && node.root !== highlightRoot;
-                        const displayRadius = isRootHighlighted ? node.r + 0.7 : node.r;
-                        const tintColor = isDimmed ? dimTone(node.baseColor, 1) : node.baseColor;
-                        // The reserved selection colour, not a yellow that read as
-                        // the particle hue from the part-of-speech spectrum.
-                        const highlightedRootColor = theme === "dark" ? SELECTION_RING : "#1f1c19";
-
-                        const shouldShowRootLabel =
-                          isRootHighlighted ||
-                          (showAllRootLabels && displayRadius >= 1.75) ||
-                          (showContextRootLabels && isFocusedAyah && displayRadius >= 1.55);
-                        const isSelectedLemmaLabel =
-                          Boolean(highlightRoot) && node.root === highlightRoot && node.lemmas.length > 0;
-                        const rootLabelText =
-                          isSelectedLemmaLabel
-                            ? formatLemmaLabel(node.lemmas)
-                            : node.root;
-                        const selectedPerpDirection = nodeIndex % 2 === 0 ? 1 : -1;
-                        const selectedCirclePerpNudge = isSelectedLemmaLabel ? (compactLayout ? 6.5 : 8.5) : 0;
-                        const selectedCircleRadialNudge = isSelectedLemmaLabel ? (compactLayout ? 2.6 : 3.4) : 0;
-                        const circleX =
-                          node.x +
-                          Math.cos(angleRad) * selectedCircleRadialNudge +
-                          Math.cos(angleRad + Math.PI / 2) * selectedPerpDirection * selectedCirclePerpNudge;
-                        const circleY =
-                          node.y +
-                          Math.sin(angleRad) * selectedCircleRadialNudge +
-                          Math.sin(angleRad + Math.PI / 2) * selectedPerpDirection * selectedCirclePerpNudge;
-                        const labelYOffset = showAllRootLabels ? (nodeIndex % 2 === 0 ? -0.75 : 0.75) : 0;
-                        const baseRootLabelFontSize = showAllRootLabels
-                          ? (compactLayout ? 7.6 : 8.2)
-                          : (compactLayout ? 6.8 : 7.2);
-                        const rootLabelFontSize = isSelectedLemmaLabel
-                          ? baseRootLabelFontSize + (compactLayout ? 12.8 : 16.4)
-                          : baseRootLabelFontSize;
-                        const selectedLabelPerpNudge = isSelectedLemmaLabel ? (compactLayout ? 5.5 : 7.2) : 0;
-                        const selectedLabelX = isSelectedLemmaLabel
-                          ? circleX +
-                          Math.cos(angleRad) * (displayRadius + 4) +
-                          Math.cos(angleRad + Math.PI / 2) * selectedPerpDirection * selectedLabelPerpNudge
-                          : node.labelX;
-                        const selectedLabelY = isSelectedLemmaLabel
-                          ? circleY +
-                          Math.sin(angleRad) * (displayRadius + 4) +
-                          Math.sin(angleRad + Math.PI / 2) * selectedPerpDirection * selectedLabelPerpNudge
-                          : node.labelY;
-
-                        return (
-                          <g key={`${bar.ayah}-${node.root}`}>
-                            <circle
-                              cx={circleX}
-                              cy={circleY}
-                              r={displayRadius}
-                              fill="transparent"
-                              stroke={isRootHighlighted ? highlightedRootColor : tintColor}
-                              strokeWidth={isRootHighlighted ? 2.5 : 1.8}
-                              opacity={isDimmed ? 0.38 : 0.9}
-                              filter={isRootHighlighted ? "url(#glow)" : undefined}
-                              style={{ cursor: "pointer" }}
-                              onMouseEnter={() => handleRootNodeHover(bar.ayah, node.root)}
-                              onMouseLeave={() => handleRootNodeHover(null, null)}
-                              onClick={(event) => handleRootNodeSelect(event, bar.ayah, node.root)}
-                            />
-                            {isRootHighlighted && (
-                              <circle
-                                cx={circleX}
-                                cy={circleY}
-                                r={displayRadius + 6}
-                                fill="none"
-                                stroke={SELECTION_RING}
-                                strokeWidth={1.6}
-                                opacity={0.95}
-                                filter="url(#selectionGlow)"
-                                pointerEvents="none"
-                              />
-                            )}
-                            {shouldShowRootLabel && (
-                              <text
-                                x={selectedLabelX}
-                                y={selectedLabelY + labelYOffset}
-                                textAnchor={labelAnchor}
-                                className="arabic-text"
-                                fill={
-                                  isRootHighlighted
-                                    ? highlightedRootColor
-                                    : isDimmed
-                                      ? (theme === "dark" ? "rgba(255,255,255,0.32)" : "rgba(31, 28, 25, 0.32)")
-                                      : theme === "dark"
-                                        ? "rgba(255,255,255,0.78)"
-                                        : "rgba(31, 28, 25, 0.78)"
-                                }
-                                fontSize={rootLabelFontSize}
-                                fontWeight={isRootHighlighted ? 600 : 500}
-                                stroke={isSelectedLemmaLabel ? (theme === "dark" ? "rgba(6, 9, 18, 0.9)" : "rgba(248, 246, 238, 0.92)") : "transparent"}
-                                strokeWidth={isSelectedLemmaLabel ? 1.8 : 0}
-                                paintOrder="stroke fill"
-                                pointerEvents="none"
-                              >
-                                {rootLabelText}
-                              </text>
-                            )}
-                          </g>
-                        );
-                      })}
-                      {/* Small circle at the end of bar */}
-                      <circle
-                        cx={endX}
-                        cy={endY}
-                        r={isSelected ? endpointRadius + 1.5 : endpointRadius}
-                        fill={isSelected ? themeColors.accent : bar.color}
-                        filter={isSelected ? "url(#glow)" : undefined}
-                      />
-                      {/* V2 selection ring on selected ayah endpoint */}
-                      {isSelected && (
-                        <circle
-                          cx={endX}
-                          cy={endY}
-                          r={endpointRadius + 7}
-                          fill="none"
-                          stroke={SELECTION_RING}
-                          strokeWidth={1.6}
-                          opacity={0.95}
-                          filter="url(#selectionGlow)"
-                          pointerEvents="none"
-                        />
-                      )}
-                      <circle
-                        cx={endX}
-                        cy={endY}
-                        r={12}
-                        fill="transparent"
-                        style={{ cursor: "pointer" }}
-                        onMouseEnter={() => handleBarHover(bar.ayah)}
-                        onMouseLeave={() => handleBarHover(null)}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedConnection(null);
-                          setHoveredConnection(null);
-                          handleAyahSelect(bar.ayah);
-                        }}
-                      />
-                      {(() => {
-                        const labelRadius = innerRadius + bar.barHeight + (compactLayout ? 14 : 18);
-                        const labelX = centerX + Math.cos(angleRad) * labelRadius;
-                        const labelY = centerY + Math.sin(angleRad) * labelRadius;
-                        const isEmphasized =
-                          highlightAyahSet.has(bar.ayah) ||
-                          bar.ayah === selectedAyah ||
-                          bar.ayah === hoveredAyah;
-                        const isSelectedAyahLabel = bar.ayah === selectedAyah;
-                        const sparseInterval =
-                          ayahCount > 180 ? 8 :
-                            ayahCount > 120 ? 6 :
-                              ayahCount > 80 ? 4 :
-                                ayahCount > 50 ? 3 : 2;
-                        const passesSparseFilter = barIndex % sparseInterval === 0;
-                        // Numbers are the graph's orientation cue, so surface
-                        // them the moment detail appears (sparse), and show the
-                        // full set with just a nudge more zoom — not a deep dive.
-                        const shouldShowAyahLabel =
-                          isEmphasized ||
-                          zoomScale >= 1.9 ||
-                          (zoomScale >= DETAIL_ZOOM_THRESHOLD && passesSparseFilter);
-                        if (!shouldShowAyahLabel) return null;
-                        return (
-                          <text
-                            x={labelX}
-                            y={labelY}
-                            textAnchor={labelAnchor}
-                            fill={
-                              isEmphasized
-                                ? theme === "dark"
-                                  ? "rgba(255,255,255,0.95)"
-                                  : "rgba(31, 28, 25, 0.95)"
-                                : theme === "dark"
-                                  ? "rgba(255,255,255,0.22)"
-                                  : "rgba(31, 28, 25, 0.36)"
-                            }
-                            fontSize={
-                              isSelectedAyahLabel
-                                ? (compactLayout ? "14.5" : "18.5")
-                                : isEmphasized
-                                  ? (compactLayout ? "9.5" : "11.5")
-                                  : (compactLayout ? "8.5" : "10")
-                            }
-                            fontWeight={isEmphasized ? 600 : 400}
-                            style={{ pointerEvents: "none" }}
-                          >
-                            {bar.ayah}
-                          </text>
-                        );
-                      })()}
-                    </>
-                  );
-
-                  return allowBarAnimation ? (
-                    <motion.g
-                      key={bar.ayah}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: motionSafeStagger(bar.ayah, 12) / 1000 }}
-                    >
-                      {barContent}
-                    </motion.g>
-                  ) : (
-                    <g key={bar.ayah}>
-                      {barContent}
-                    </g>
-                  );
-                })}
-              </g>
+                <>
+                  <DetailBars
+                    key={suraId}
+                    bars={barsWithGeometry}
+                    selectedAyah={selectedAyah}
+                    highlightRoot={highlightRoot ?? null}
+                    highlightAyahSet={highlightAyahSet}
+                    maxRootsVisible={maxRootsPerAyahVisible}
+                    showContextRootLabels={showContextRootLabels}
+                    showAllRootLabels={showAllRootLabels}
+                    ayahLabelLevel={ayahLabelLevel}
+                    ayahCount={ayahCount}
+                    compactLayout={compactLayout}
+                    barStrokeWidth={barStrokeWidth}
+                    endpointRadius={endpointRadius}
+                    innerRadius={innerRadius}
+                    centerX={centerX}
+                    centerY={centerY}
+                    dark={dark}
+                    accent={themeColors.accent}
+                    animate={animateBars}
+                    formatLemmaLabel={formatLemmaLabel}
+                    handlers={handlers}
+                  />
+                  {detailHoverOverlay}
+                </>
               )}
             </g>
           </svg>

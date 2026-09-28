@@ -939,26 +939,40 @@
             "visibleLabel": "shown",
             "occurrenceSummary": "{count} occurrences of {root} in {ayahCount} ayahs across {surahCount} surahs",
             "occurrenceCentre": "{count} occurrences · {surahCount} surahs",
-            "occurrenceLegend": "Occurrence of the selected root",
+            "occurrenceLegend": "Dot: an ayah holding the selected root",
             "selectedOccurrenceLegend": "Selected occurrence",
             "ayahPinned": "Pinned — click another occurrence to switch",
             "ayahHoverHint": "Hover preview — click to pin",
-            "zoomToSeeMore": "Zoom in to reveal more roots",
+            "zoomToSeeMore": "Zoom in to label more roots",
             "searchRoot": "Search Root",
             "searchRootPlaceholder": "Type an Arabic root…",
             "searchRootHint": "{count} unique roots available. Search to highlight any root across surahs.",
             "noRootFound": "No matching root found. Try a different Arabic root.",
+            "centreSurahs": "{count} surahs",
+            "centreTotals": "{words} words · {roots} roots",
+            "rootsShown": "{shown} of {total} roots shown",
+            "rootsLabelled": "{shown} of {total} roots labelled",
+            "words": "Words",
+            "legendBar": "Inner bar: surah length in words",
+            "legendRootDot": "Dot: a root, sized by its count",
+            "legendPresence": "Tick: surahs that hold the root",
+            "tipOpenSurah": "Click to open this surah",
+            "tipSelectRoot": "Click to follow this root across the Quran",
+            "tipBack": "Click the centre to return to the whole Quran",
+            "loading": "Loading the map…",
+            "loadError": "The map couldn't load. Check your connection and reload.",
+            "ariaLabel": "Radial map of the 114 surahs: their lengths, their commonest roots, and where a selected root occurs",
             "Help": {
                 "title": "Quran Structure Map",
-                "description": "A radial hierarchy from the full corpus to surahs and their roots.",
-                "hierarchyLabel": "Hierarchy Levels",
-                "hierarchyText": "Center = corpus, first ring = surahs, outer ring = roots.",
-                "nodesLabel": "Nodes & Size",
-                "nodesText": "Node size reflects token volume (surahs) or occurrence count (roots).",
+                "description": "The 114 surahs as a ring: each surah's length points inward, its roots outward.",
+                "hierarchyLabel": "Reading the ring",
+                "hierarchyText": "Each arc is a surah, in mushaf order clockwise from the top: teal for Makki, amber for Madani. The bar inside it is the surah's length in words. Outside it stand its five commonest roots, the most frequent nearest the ring.",
+                "nodesLabel": "Dots and sizes",
+                "nodesText": "A dot's size is how many words carry that root in the surah. Opening a surah shows all its roots, the most frequent at the centre of the sector. Selecting a root shows one dot per ayah that holds it, stacked outward in ayah order.",
                 "interactLabel": "Interactions",
-                "interactText": "Click a surah to focus it. Click a root to inspect counts. Drag to pan and scroll to zoom.",
+                "interactText": "Click a surah to open it, and the centre to go back. Click a root to follow it across the Quran; click one of its ayahs to read it. Drag to pan; scroll or pinch to zoom. Esc closes what you opened.",
                 "tipsLabel": "Tips",
-                "tipsText": "After focusing a surah, zoom in to reveal more roots, or use search to highlight a root globally."
+                "tipsText": "Hover a root to see every surah that holds it, marked just outside the ring. Labels never overlap: zoom in and more appear. Search finds any root by its Arabic letters, its Buckwalter spelling or its meaning."
             }
         },
         "RootFlow": {
@@ -1434,19 +1448,19 @@
             "claim": "How long each surah is, and where a root clusters."
         },
         "corpus-architecture": {
-            "summary": "A hierarchical treemap of the Quran's physical structure: juz → surah → ayah groups.",
+            "summary": "The 114 surahs as a ring: length inward, commonest roots outward. Open a surah to see all its roots, or pick a root to see every ayah that holds it.",
             "legend": {
-                "juz": "Juz",
-                "surah": "Surah",
-                "ayahGroup": "Ayah group"
+                "makki": "Makki surah",
+                "madani": "Madani surah",
+                "root": "Root (size = count)"
             },
             "hint": {
-                "expand": "Click a block to expand and see its contents.",
-                "click": "Click a surah cell to focus on it.",
-                "zoom": "Scroll to zoom in for more detail."
+                "expand": "Click a surah to open it; click the centre to return.",
+                "click": "Click a root to follow it across the Quran.",
+                "zoom": "Scroll or pinch to zoom; more labels appear as you zoom in."
             },
-            "purpose": "Understand the Quran's structural layout before diving into individual views.",
-            "claim": "How the Quran nests: juz, then surah, then ayah."
+            "purpose": "See the whole Quran's shape at once: which surahs are long, which roots dominate them, and where any root recurs.",
+            "claim": "Every surah, its length and its roots, in one ring."
         },
         "radial-sura": {
             "summary": "A circular layout of every token in one surah, colored by linguistic role.",
