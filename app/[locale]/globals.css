@@ -3793,6 +3793,15 @@ button.site-footer-link {
   --selection: #fbead2;
   --toolbar-bg: rgba(18, 28, 33, 0.85);
   --footer-glass-bg: rgba(12, 20, 24, 0.94);
+  /* Categorical viz colours. dark-theme.css sets them too, but its block ties
+     with :root on <html> and loses on order, so without these the page level
+     (drawer, legends, embeds) got the light values in dark mode. */
+  --viz-cat-makki: #56a697;
+  --viz-cat-madani: #e8924a;
+  --viz-root-1: #e8924a;
+  --viz-root-2: #56a697;
+  --viz-root-3: #a78bfa;
+  --viz-meeting: #f3e9d8;
   color: var(--ink);
 }
 

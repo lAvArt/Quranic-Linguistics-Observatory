@@ -34,6 +34,7 @@ https://quranobservatory.org/embed/{vizMode}?surah={number}&theme={light|dark}&r
 | `corpus-architecture` | Corpus Architecture |
 | `knowledge-graph` | Knowledge Graph |
 | `collocation-network` | Collocation Network |
+| `concordance-rings` | Concordance Rings |
 | `heatmap` | Heatmap |
 
 ## Query Parameters
@@ -43,6 +44,16 @@ https://quranobservatory.org/embed/{vizMode}?surah={number}&theme={light|dark}&r
 | `surah` | number | `1` | Surah number (1-114) |
 | `theme` | string | `light` | `light` or `dark` |
 | `root` | string | — | Optional Arabic root to focus on |
+
+`concordance-rings` spans all 114 surahs, so it ignores `surah` and takes its own
+parameters, the same ones its deep links in the app carry:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `roots` | string | — | Two or three roots, comma-separated and URL-encoded, e.g. `خلق,سمو,ارض` |
+| `view` | string | `stacked` | `stacked`, `all` (all 114 rings) or `overlaid` |
+| `meet` | string | `ayah` | `ayah`: a surah qualifies when the roots share an ayah; `surah`: when each occurs anywhere in it |
+| `order` | string | `mushaf` | Ring order, inside to out: `mushaf`, `length`, `meetings` or `firstMeeting` |
 
 ## Examples
 

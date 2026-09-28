@@ -11,7 +11,7 @@
  * Usage:
  *   npm run build && npm start          # in one terminal
  *   npx tsx scripts/build-graph-images.ts [--base http://localhost:3000]
- *     [--out public/graphs] [--settle 6000] [--theme dark]
+ *     [--out public/graphs] [--settle 6000] [--theme dark] [--only <mode>]
  */
 import { chromium, type Browser } from '@playwright/test';
 import { promises as fs } from 'fs';
@@ -31,6 +31,8 @@ const BASE = arg('base', 'http://localhost:3000').replace(/\/$/, '');
 const OUT_DIR = arg('out', path.join('public', 'graphs'));
 const SETTLE_MS = Number(arg('settle', '6000'));
 const THEME = arg('theme', 'dark') === 'light' ? 'light' : 'dark';
+/** Rebuild one mode's image without re-rendering (and re-diffing) the rest. */
+const ONLY = arg('only', '');
 
 /** Same channel fallback as ux-shots.ts: machines without the Playwright
  *  download still work through system Edge/Chrome. */
@@ -49,41 +51,42 @@ async function launchBrowser(): Promise<Browser> {
 
 /**
  * The graphs mount empty and fill in asynchronously, so `load` is far too early.
- * Wait for the SVG to actually carry geometry, then let animations settle.
+ * Wait for the graph to actually carry geometry, then let animations settle.
+ *
+ * SVG modes are counted by their marks. Canvas modes (concordance-rings) have
+ * none to count, so they publish theirs as `data-marks` on the stage.
  */
+const countMarks = () =>
+    Math.max(
+        0,
+        ...Array.from(document.querySelectorAll('svg')).map(
+            (s) => s.querySelectorAll('path, circle, rect, line, text').length
+        ),
+        ...Array.from(document.querySelectorAll('[data-marks]')).map(
+            (el) => Number(el.getAttribute('data-marks')) || 0
+        )
+    );
+
 async function waitForGraph(page: import('@playwright/test').Page): Promise<number> {
-    await page.waitForSelector('svg', { timeout: 45_000 });
     try {
-        await page.waitForFunction(
-            () => {
-                const svgs = Array.from(document.querySelectorAll('svg'));
-                return svgs.some(
-                    (s) => s.querySelectorAll('path, circle, rect, line, text').length > 20
-                );
-            },
-            { timeout: 45_000 }
-        );
+        await page.waitForFunction(`(${countMarks.toString()})() > 20`, undefined, { timeout: 45_000 });
     } catch {
         // Fall through: capture whatever rendered rather than failing the run.
         // The per-mode element count below makes a thin capture obvious.
     }
     await page.waitForTimeout(SETTLE_MS);
-    return page.evaluate(() => {
-        const svgs = Array.from(document.querySelectorAll('svg'));
-        return Math.max(
-            0,
-            ...svgs.map((s) => s.querySelectorAll('path, circle, rect, line, text').length)
-        );
-    });
+    return page.evaluate(countMarks);
 }
 
 async function main(): Promise<void> {
+    const entries = ONLY ? VIZ_GALLERY.filter((e) => e.mode === ONLY) : VIZ_GALLERY;
+    if (entries.length === 0) throw new Error(`--only ${ONLY}: not a gallery mode`);
     await fs.mkdir(OUT_DIR, { recursive: true });
     const browser = await launchBrowser();
     const failures: string[] = [];
 
     try {
-        for (const entry of VIZ_GALLERY) {
+        for (const entry of entries) {
             const query = [entry.embedQuery, `theme=${THEME}`].filter(Boolean).join('&');
             const url = `${BASE}/embed/${entry.mode}?${query}`;
             const context = await browser.newContext({
@@ -124,7 +127,7 @@ async function main(): Promise<void> {
         for (const f of failures) console.error(`  - ${f}`);
         process.exit(1);
     }
-    console.log(`\nWrote ${VIZ_GALLERY.length} graph image(s) to ${OUT_DIR}`);
+    console.log(`\nWrote ${entries.length} graph image(s) to ${OUT_DIR}`);
 }
 
 main().catch((error) => {

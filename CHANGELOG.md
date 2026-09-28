@@ -8,6 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
+- **Concordance Rings**, a tenth viz mode (`?viz=concordance-rings`): two or
+  three roots across the whole Quran. Every surah is a ring and every ayah a
+  tick, coloured where a chosen root occurs and cream where all of them meet in
+  one ayah. Stacked, all-114 and overlaid views; rings that travel when re-sorted
+  and turn to line their first meetings up at 12 o'clock; hover reads out the
+  ayah with the roots' words coloured; clicking a ring wires its own
+  occurrences and opens a surah card in the details panel. Eight recurring
+  phrases as presets. Drawn in WebGL2 (60 fps on a real GPU) with a 2D
+  fallback, from an offline root map built from the QAC morphology file
+  (`npm run data:concordance`, 91 KB gzipped), so it is untouched by the
+  `corpus_tokens` misalignment. Available as an embed and in the graph gallery.
+  Spec and figures: `docs/CONCORDANCE-RINGS.md`; the README opens its visual
+  section with a frame-exact recording (`npm run docs:record-rings`).
 - A `/frequency` page: how often each Qur'anic root appears, in five tiers from
   Most frequent (ranks 1–10) to Fifth tier (251–500), with a 500-root leaderboard,
   a coverage ladder, and three charts that read out root, gloss and counts on

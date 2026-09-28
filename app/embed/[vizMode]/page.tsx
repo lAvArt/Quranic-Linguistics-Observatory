@@ -12,6 +12,7 @@ const VALID_MODES: Set<string> = new Set<VisualizationMode>([
   "corpus-architecture",
   "knowledge-graph",
   "collocation-network",
+  "concordance-rings",
   "heatmap",
 ]);
 

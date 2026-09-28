@@ -21,7 +21,7 @@ see `docs/DATA_SOURCES.md` and the hamza-normalization note in `lib/corpus`.
 | Search workspace | `/{locale}/search?q={query}` | `q` may carry the `near:`/`قرب:` operator (`?q=أب قرب:ابراهيم`) — the الجوار
 panel then renders pair mode with every co-occurrence window. The home pair card's "see all results" CTA deep-links here. |
 
-## The nine modes
+## The ten modes
 
 All in `components/visualisations/`. Each renders its own left-panel cards through
 the sidebar portal (see Shell anatomy).
@@ -36,13 +36,15 @@ the sidebar portal (see Shell anatomy).
 | `surah-distribution` | `SurahDistributionGraph.tsx` | All 114 surahs, x = surah index, dot = surah (revelation place color, size = ayahs). |
 | `corpus-architecture` | `CorpusArchitectureMap.tsx` | Corpus → surah → root structure map with root search. **Occurrence mode** (2026-09-05) when a root is selected and no surah is drilled: leaves become that root's AYAHS, one wire per occurrence, everything else hidden; surahs carrying it stay lit, the rest are dim ring markers. |
 | `knowledge-graph` | `KnowledgeGraphViz.tsx` | Personal tracked-roots network; ghost/empty state when nothing tracked. |
-| `collocation-network` | `CollocationNetworkGraph.tsx` | PMI-weighted collocates orbiting a target root; "Heuristic estimate" badge = derived, not corpus-annotated. Strongest default view of the nine. |
+| `collocation-network` | `CollocationNetworkGraph.tsx` | PMI-weighted collocates orbiting a target root; "Heuristic estimate" badge = derived, not corpus-annotated. Strongest default view of the SVG modes. |
+| `concordance-rings` | `ConcordanceRings.tsx` | 2–3 roots across all 114 surahs: a ring per surah, a tick per ayah, cream where every root meets in one ayah. Canvas + WebGL2, with motion; details below. |
 
 Mode switching: `components/ui/VisualizationSwitcher.tsx` (grouped by intent,
 beginner/advanced toggle) inside `components/shell/GraphToolbar.tsx`.
 
-A tenth mode, `concordance-rings` (2–3 roots across all 114 surahs as concentric
-rings, meetings where they share an ayah). Spec, figures and performance notes:
+### `concordance-rings`
+
+The one canvas mode. Spec, figures, performance notes and the animated recording:
 `docs/CONCORDANCE-RINGS.md`.
 
 | | |
@@ -51,6 +53,8 @@ rings, meetings where they share an ayah). Spec, figures and performance notes:
 | Data | `scripts/build-concordance.ts` → `public/data/concordance.json` (opens with the mode, 91 KB gzipped) and `concordance-text.json` (first hover, 258 KB) |
 | Logic | `lib/corpus/concordanceClient.ts` (selection), `lib/viz/concordance/geometry.ts` (layout, ticks, hit-testing), `motion.ts` (turn and travel) |
 | Rendering | `tickRenderer.ts` (WebGL2 instanced, `Path2D` fallback) and `drawLayers.ts` (2D scale, histogram, threads, overlaid view, selection) |
+| Embed / gallery | `/embed/concordance-rings?roots=…&view=…`; gallery entry in `lib/seo/vizGallery.ts`. The mode fetches its own data, so `EmbedClient` skips the token load for it. The stage publishes its tick count as `data-marks`, which `build-graph-images.ts` waits on in place of SVG marks. |
+| Recording | `npm run docs:record-rings` (`scripts/record-concordance.ts`): Playwright's clock stepped 1/25 s per frame, joined into `public/docs/images/concordance-rings/rings-in-motion.webp` |
 | Not yet | the alternative turn anchors (last meeting, one root's first occurrence, median meeting) |
 
 Three canvases: a 2D back layer (scale, marker, histogram, threads), the WebGL
