@@ -7740,6 +7740,13 @@ button.site-footer-link {
    sits at the left, and its wrapped lines should too. */
 [dir="rtl"] .cr-meetings-refs { text-align: left; }
 
+/* The rings in miniature, in the explainer (components/ui/ConcordanceAnatomy). */
+.cr-anatomy { margin: 0; display: grid; justify-items: center; gap: 6px; }
+.cr-anatomy svg { inline-size: 100%; max-inline-size: 240px; block-size: auto; overflow: visible; }
+.cr-anatomy-num { font-size: 9px; fill: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.cr-anatomy-surah { font-size: 7.5px; fill: var(--ink-muted); }
+.cr-anatomy figcaption { max-inline-size: 30ch; font-size: 0.8rem; line-height: 1.45; text-align: center; color: var(--ink-secondary); }
+
 @media (prefers-reduced-motion: reduce) {
   .cr-seg button, .cr-switch i, .cr-switch i::after, .cr-presets button { transition: none; }
 }
@@ -7929,11 +7936,19 @@ select:focus-visible {
   margin: 32px 0 8px;
 }
 
-.viz-gallery-page p {
+.viz-gallery-page p,
+.viz-gallery-page li {
   font-size: var(--text-body);
   line-height: 1.65;
   margin: 0;
   color: var(--ink-secondary);
+}
+
+.viz-gallery-page ul {
+  margin: 0;
+  padding-inline-start: 1.2em;
+  display: grid;
+  gap: 8px;
 }
 
 .viz-gallery-claim {

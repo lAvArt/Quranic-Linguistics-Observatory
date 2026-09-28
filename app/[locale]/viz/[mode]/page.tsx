@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { SITE_URL, SITE_NAME, languageAlternates } from "@/lib/seo/site";
 import { routing } from "@/i18n/routing";
+import { VIZ_EXPLAINERS } from "@/lib/config/vizExplainers";
+import type { VisualizationMode } from "@/lib/schema/visualizationTypes";
 import {
   findGalleryEntry,
   graphImagePath,
@@ -62,6 +64,7 @@ async function resolve(locale: string, mode: string) {
     summary: tExp(`${mode}.summary`),
     purpose: tExp(`${mode}.purpose`),
     claim: tExp(`${mode}.claim`),
+    read: (VIZ_EXPLAINERS[mode as VisualizationMode]?.readKeys ?? []).map((key) => tExp(key)),
   };
 }
 
@@ -140,6 +143,17 @@ export default async function VizGalleryPage({ params }: VizPageProps) {
           <h2>{t("whatItShows")}</h2>
           <p>{data.summary}</p>
         </section>
+
+        {data.read.length ? (
+          <section>
+            <h2>{t("howToRead")}</h2>
+            <ul>
+              {data.read.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section>
           <h2>{t("whatItIsFor")}</h2>

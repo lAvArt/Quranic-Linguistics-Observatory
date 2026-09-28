@@ -1432,6 +1432,8 @@
     },
     "VizExplainer": {
         "helpLabel": "What am I seeing?",
+        "readHeading": "How to read it",
+        "useHeading": "How to use it",
         "surah-distribution": {
             "summary": "A radial chart showing surah lengths and root frequency distribution across the Quran.",
             "legend": {
@@ -1594,13 +1596,30 @@
                 "meeting": "Meeting — every chosen root in one ayah",
                 "ayah": "Tick — one ayah; height follows its word count",
                 "thread": "Thread — a meeting to the nearest one on the next ring",
-                "histogram": "Outer histogram — where meetings fall, 0–100 through a surah"
+                "histogram": "Histogram — how many meetings fall at each point of the 0–100 scale"
+            },
+            "figure": {
+                "caption": "Read each ring clockwise from the ▼: 0 is its first ayah, 50 its middle one, 100 its last.",
+                "label": "Diagram of three rings, each with a gap at the top under a ▼ marker. An outer scale runs clockwise from 0 at the top right, through 50 at the bottom, to 100 at the top left. Meeting ticks on neighbouring rings are joined by threads."
+            },
+            "read": {
+                "rings": "Each ring is one surah, its number in the gap at the top. By default the lowest-numbered surah is the outer ring and higher ones step inward; “Ring order” sorts them other ways.",
+                "scale": "A ring starts at the top, just right of the ▼, and runs clockwise. The outer scale, 0 to 100, is how far through its surah an ayah is. Every surah is stretched to the same circle, so 50 is the middle ayah of a short surah and of a long one alike.",
+                "ticks": "Each tick is one ayah, taller the more words it has. It lights in a root's colour where that root occurs, and in the meeting colour where every chosen root shares the ayah.",
+                "threads": "Threads join each meeting to the nearest meeting on the next ring out, so meetings at the same point line up. The bars just inside the scale count the meetings at each point, across every ring.",
+                "centre": "The centre names the roots and counts the surahs where they meet, and the meetings in all.",
+                "caveat": "Positions count ayahs, not words. A meeting means the roots share an ayah, not that the ayah links them in meaning: open it and read."
             },
             "hint": {
-                "roots": "Choose up to three roots, or start from a recurring phrase.",
-                "hover": "Hover or tap a tick for its surah, ayah and which roots occur there. Tap the same ring again to open its surah card.",
-                "view": "Switch between the surahs that qualify and all 114.",
-                "zoom": "Pinch, scroll or double-tap to zoom in, and drag to move around. Full view, or a double tap, brings the rings back."
+                "roots": "Type a root in Arabic, in Buckwalter or by its meaning to add it, up to three, or start from a recurring phrase. × removes a root.",
+                "hover": "Hover a tick, or tap it on a touch screen, to read its ayah with each root's words in colour. Click a ring (tap it twice on a touch screen), or a surah under “Where they meet”, to open its card; click empty space to go back to the list.",
+                "meetIn": "“Roots meet in”: one ayah keeps the surahs where every root shares an ayah; one surah keeps those where each root appears anywhere in it.",
+                "view": "“Rings”: stacked shows just those surahs; all 114 shows every surah and dims the rest; overlaid lays those surahs on one ring, with bars counting each root at each point.",
+                "order": "“Ring order” sorts the rings from the centre out: by surah number, by length, by number of meetings, or by where the first meeting falls.",
+                "align": "“Align at first meeting” turns every ring so its first meeting sits under the ▼, to compare what follows it. On turned rings the 0–100 scale no longer applies.",
+                "toggles": "Threads, the Makki / Madani tint of each surah's ticks and the position histogram can each be switched off.",
+                "zoom": "Pinch, scroll or double-tap to zoom in, and drag to move around. Full view, or a double tap, brings the rings back.",
+                "keys": "With the rings focused, ↑ and ↓ move between rings and ← and → between ayahs; Enter opens a ring and Esc clears it. + and − zoom, and 0 returns to the full view."
             }
         }
     },
@@ -1844,6 +1863,7 @@
     "VizGallery": {
         "whatItShows": "What it shows",
         "whatItIsFor": "What it is for",
+        "howToRead": "How to read it",
         "openLive": "Open the interactive {title}"
     },
     "SiteNav": {

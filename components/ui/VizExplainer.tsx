@@ -4,6 +4,11 @@ import { useState, type CSSProperties } from "react";
 import { useTranslations } from "next-intl";
 import { VIZ_EXPLAINERS } from "@/lib/config/vizExplainers";
 import type { VisualizationMode } from "@/lib/schema/visualizationTypes";
+import ConcordanceAnatomy from "./ConcordanceAnatomy";
+
+const FIGURES = {
+  "concordance-anatomy": ConcordanceAnatomy,
+} as const;
 
 interface VizExplainerProps {
   vizMode: VisualizationMode;
@@ -23,6 +28,8 @@ export default function VizExplainer({ vizMode }: VizExplainerProps) {
   const explainer = VIZ_EXPLAINERS[vizMode];
 
   if (!explainer) return null;
+  const Figure = explainer.figure ? FIGURES[explainer.figure] : null;
+  const readKeys = explainer.readKeys ?? [];
 
   return (
     <div className="viz-explainer-panel" data-open={isOpen}>
@@ -48,6 +55,8 @@ export default function VizExplainer({ vizMode }: VizExplainerProps) {
             {t(explainer.summaryKey)}
           </p>
 
+          {Figure ? <Figure /> : null}
+
           <div className="viz-explainer-legend">
             {explainer.legend.map((item, i) => (
               <div
@@ -63,6 +72,20 @@ export default function VizExplainer({ vizMode }: VizExplainerProps) {
               </div>
             ))}
           </div>
+
+          {/* A view with reading notes gets two headed sections — reading the
+              picture, then working the controls; the rest keep one hint list. */}
+          {readKeys.length ? (
+            <>
+              <h4 className="viz-explainer-heading">{t("readHeading")}</h4>
+              <ul className="viz-explainer-read">
+                {readKeys.map((key) => (
+                  <li key={key}>{t(key)}</li>
+                ))}
+              </ul>
+              <h4 className="viz-explainer-heading">{t("useHeading")}</h4>
+            </>
+          ) : null}
 
           <ul className="viz-explainer-hints">
             {explainer.hintKeys.map((hintKey) => (
@@ -208,6 +231,39 @@ export default function VizExplainer({ vizMode }: VizExplainerProps) {
           font-weight: 700;
           color: color-mix(in srgb, var(--viz-explainer-accent) 72%, white 28%);
           text-wrap: balance;
+        }
+
+        .viz-explainer-heading {
+          margin: 6px 0 -4px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--ink-muted);
+        }
+
+        .viz-explainer-read {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          gap: 9px;
+        }
+
+        .viz-explainer-read li {
+          position: relative;
+          padding-inline-start: 16px;
+          color: var(--ink-secondary);
+          line-height: 1.5;
+        }
+
+        .viz-explainer-read li::before {
+          content: "";
+          position: absolute;
+          inset-inline-start: 2px;
+          top: 0.62em;
+          width: 5px;
+          height: 5px;
+          border-radius: 50%;
+          background: rgba(255, 179, 64, 0.7);
         }
 
         .viz-explainer-hints {
