@@ -230,6 +230,7 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
       "concordance-rings.hint.hover",
       "concordance-rings.hint.roots",
       "concordance-rings.hint.view",
+      "concordance-rings.hint.zoom",
     ],
     purposeKey: "concordance-rings.purpose",
     claimKey: "concordance-rings.claim",

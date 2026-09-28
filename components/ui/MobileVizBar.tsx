@@ -82,22 +82,9 @@ const QUICK_VIEWS: QuickViewItem[] = [
   },
 ];
 
-/* Legend glyph — a small bulleted list, distinct from MobileNavMenu's plain
-   hamburger (no dots there). */
-const legendIcon = (
-  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none" />
-    <circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none" />
-    <circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none" />
-    <line x1="9" y1="6" x2="20" y2="6" />
-    <line x1="9" y1="12" x2="20" y2="12" />
-    <line x1="9" y1="18" x2="20" y2="18" />
-  </svg>
-);
-
-/* Tools glyph — an equalizer/sliders icon, distinct from the settings gear
-   used by DisplaySettingsPanel elsewhere. */
-const toolsIcon = (
+/* Controls glyph — sliders, for the sheet with each view's legend and
+   controls. Distinct from the settings gear used by DisplaySettingsPanel. */
+const controlsIcon = (
   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
     <line x1="5" y1="4" x2="5" y2="20" />
     <circle cx="5" cy="9" r="2" fill="currentColor" stroke="none" />
@@ -105,6 +92,16 @@ const toolsIcon = (
     <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none" />
     <line x1="19" y1="4" x2="19" y2="20" />
     <circle cx="19" cy="7" r="2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/* Details glyph — a screen with a sheet raised from its bottom edge, which
+   is where the details sheet (explain / inspect / search / index) comes from. */
+const detailsIcon = (
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3.5" y="3.5" width="17" height="17" rx="3" />
+    <path d="M3.5 13.5h17" />
+    <path d="M10 16.5h4" />
   </svg>
 );
 
@@ -166,28 +163,32 @@ export default function MobileVizBar({
 
         <div className="mvb-divider" />
 
+        {/* The two sheets, named in words: an icon alone was easy to lose,
+            and closing a sheet left no obvious way back to it. */}
         <button
           type="button"
-          className={`mvb-btn ${isLeftSidebarOpen ? "active" : ""}`}
+          className={`mvb-btn mvb-sheet ${isLeftSidebarOpen ? "active" : ""}`}
           data-testid="mobile-viz-bar-legend"
           aria-label={isLeftSidebarOpen ? tBar("hideLegend") : tBar("showLegend")}
           title={isLeftSidebarOpen ? tBar("hideLegend") : tBar("showLegend")}
           aria-pressed={isLeftSidebarOpen}
           onClick={toggleLeftSidebar}
         >
-          {legendIcon}
+          {controlsIcon}
+          <span className="mvb-label" aria-hidden="true">{tBar("controls")}</span>
         </button>
 
         <button
           type="button"
-          className={`mvb-btn ${isRightSidebarOpen ? "active" : ""}`}
+          className={`mvb-btn mvb-sheet ${isRightSidebarOpen ? "active" : ""}`}
           data-testid="mobile-viz-bar-tools"
           aria-label={isRightSidebarOpen ? tBar("hideTools") : tBar("showTools")}
           title={isRightSidebarOpen ? tBar("hideTools") : tBar("showTools")}
           aria-pressed={isRightSidebarOpen}
           onClick={toggleRightSidebar}
         >
-          {toolsIcon}
+          {detailsIcon}
+          <span className="mvb-label" aria-hidden="true">{tBar("details")}</span>
         </button>
       </div>
 
@@ -263,13 +264,43 @@ export default function MobileVizBar({
           transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
-        .mvb-btn:hover {
-          background: rgba(0, 0, 0, 0.05);
-          color: var(--ink);
+        /* Labelled sheet toggles: icon over a short word. */
+        .mvb-sheet {
+          flex-direction: column;
+          gap: 2px;
+          width: auto;
+          min-width: 52px;
+          padding: 0 6px;
         }
 
-        :global([data-theme="dark"]) .mvb-btn:hover {
-          background: rgba(255, 255, 255, 0.08);
+        .mvb-label {
+          font-size: 9.5px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+        }
+
+        /* Hover only where there is one: on touch, :hover sticks after a tap
+           and left the last-tapped button looking selected. */
+        @media (hover: hover) {
+          .mvb-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--ink);
+          }
+
+          :global([data-theme="dark"]) .mvb-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+          }
+        }
+
+        /* A phone has room for the switcher and two named sheets, not also
+           three shortcuts to views the switcher already lists. */
+        @media (max-width: 440px) {
+          .mvb-quick-views,
+          .mvb-divider {
+            display: none;
+          }
         }
 
         /* Quiet selection tint, matching the rail/toolbar's active treatment

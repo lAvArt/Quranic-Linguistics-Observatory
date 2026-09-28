@@ -2,8 +2,11 @@ export type LexicalColorMode = "theme" | "frequency" | "identity";
 
 const LEXICAL_COLOR_MODES: readonly LexicalColorMode[] = ["theme", "frequency", "identity"];
 
-const LIGHT_FREQUENCY_STOPS = ["#93c5fd", "#22c55e", "#eab308", "#f97316", "#dc2626"] as const;
-const DARK_FREQUENCY_STOPS = ["#1d4ed8", "#06b6d4", "#22c55e", "#f59e0b", "#f43f5e"] as const;
+// Rare → frequent, from a recessive slate up through the data spectrum's teal,
+// yellow and amber to coral, so the commonest roots are the warmest. The old
+// ramps were stock Tailwind rainbows (blue → cyan → green → amber → rose).
+const LIGHT_FREQUENCY_STOPS = ["#b3c0bf", "#0f766e", "#a16207", "#b45309", "#b8431f"] as const;
+const DARK_FREQUENCY_STOPS = ["#3d5862", "#56a697", "#e6c24e", "#e8924a", "#dd6a47"] as const;
 
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;

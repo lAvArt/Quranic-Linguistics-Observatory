@@ -49,6 +49,11 @@ const DRAWER_SELECTOR = ".context-drawer";
  *  inline edge. */
 const STATUS_BAR_SELECTOR = ".status-bar";
 
+/** The "How to read this view" chip (components/ui/VizIntroCard.tsx), which
+ *  hangs just under the status pill until the reader dismisses it. A leaving
+ *  chip still has a box while it fades, so the `.is-leaving` one is skipped. */
+const INTRO_CHIP_SELECTOR = ".viz-intro-chip:not(.is-leaving)";
+
 /** Class name of the floating graph mode/colour toolbar (see
  *  components/shell/GraphToolbar.tsx, `.graph-toolbar`) — always centred at
  *  the BOTTOM of the canvas, the mirror image of the status pill above.
@@ -158,7 +163,14 @@ function getInlineOcclusionInset(svg: Element, vw: number): { start: number; end
     getOccludingElement(DOCK_SELECTOR) ?? getOccludingElement(FLOATING_PANEL_SELECTOR),
     svgRect
   );
-  const dockInset = dockOverlap ? sideInsetFromOverlap(dockOverlap, pxToUser) : { start: 0, end: 0 };
+  // A panel spanning most of the canvas is a phone's overlay sheet, not a side
+  // column: fitting beside it squeezed the graph into the sliver next to it
+  // (the rings' centre jumped to x≈78 on a 390px screen) and, since the sheet
+  // unmounts without a transition, the graph could stay squeezed after it closed.
+  const dockInset =
+    dockOverlap && dockOverlap.overlapX / svgRect.width < 0.6
+      ? sideInsetFromOverlap(dockOverlap, pxToUser)
+      : { start: 0, end: 0 };
 
   const drawerOverlap = getElementOverlap(getOccludingElement(DRAWER_SELECTOR), svgRect);
   const drawerInset =
@@ -184,8 +196,15 @@ function getVerticalOcclusionInset(svg: Element, vh: number): { top: number; bot
   if (svgRect.width <= 0 || svgRect.height <= 0) return { top: 0, bottom: 0 };
   const pxToUser = vh / svgRect.height;
 
-  const statusBarOverlap = getElementOverlap(getOccludingElement(STATUS_BAR_SELECTOR), svgRect);
-  const top = statusBarOverlap ? Math.max(0, statusBarOverlap.rect.bottom - svgRect.top) * pxToUser : 0;
+  // The status pill, and the intro chip that hangs under it until dismissed —
+  // both sit over the canvas, and a fit that ignored the chip seated every
+  // graph's top edge under it (on a phone, over the rings' 12 o'clock marker).
+  let topEdge = 0;
+  for (const selector of [STATUS_BAR_SELECTOR, INTRO_CHIP_SELECTOR]) {
+    const overlap = getElementOverlap(getOccludingElement(selector), svgRect);
+    if (overlap) topEdge = Math.max(topEdge, overlap.rect.bottom - svgRect.top);
+  }
+  const top = topEdge * pxToUser;
 
   const toolbarOverlap = getElementOverlap(getOccludingElement(GRAPH_TOOLBAR_SELECTOR), svgRect);
   const toolbarBottom = toolbarOverlap ? Math.max(0, svgRect.bottom - toolbarOverlap.rect.top) * pxToUser : 0;

@@ -4,9 +4,14 @@ import path from "node:path";
 import { findRootIndex, selectConcordance, type ConcordancePayload } from "@/lib/corpus/concordanceClient";
 import {
   COLOUR,
+  IDENTITY_ZOOM,
+  MAX_ZOOM,
+  THIN_RING_PX,
   TICK_STRIDE,
   angleAt,
   buildTicks,
+  clampZoom,
+  composeZoom,
   frameFor,
   hitTest,
   meetingHistogram,
@@ -14,7 +19,10 @@ import {
   ringTargets,
   rotationToTop,
   threadsFor,
+  transformBetween,
   wiringFor,
+  zoomFrame,
+  zoomRings,
   type LiveRing,
 } from "@/lib/viz/concordance/geometry";
 import { RingMotion, TRAVEL_MS } from "@/lib/viz/concordance/motion";
@@ -128,6 +136,62 @@ describe("concordance geometry", () => {
     expect(ibrahim.perRoot).toEqual([6, 3, 1]);
     expect(wiringFor(ibrahim, 3)).toHaveLength(18);
     expect(ibrahim.meetings.map((m) => m.ayah)).toEqual([23]);
+  });
+});
+
+describe("concordance zoom", () => {
+  it("folds a gesture's live transform into the zoom, and back again", () => {
+    const from = { k: 1.5, x: 20, y: -35 };
+    const to = { k: 3.2, x: -140, y: 60 };
+    const t = transformBetween(from, to, frame);
+    const got = composeZoom(from, frame, t.s, t.dx, t.dy);
+    expect(got.k).toBeCloseTo(to.k, 9);
+    expect(got.x).toBeCloseTo(to.x, 9);
+    expect(got.y).toBeCloseTo(to.y, 9);
+  });
+
+  it("keeps a pinch point still: the ring under two fingers stays under them", () => {
+    // A live transform about (x, y) — s·q + (x − s·x) — leaves (x, y) fixed on
+    // screen, so the base point there must map to the same screen point after.
+    const [x, y, s] = [620, 280, 2.4];
+    const z = composeZoom(IDENTITY_ZOOM, frame, s, x - s * x, y - s * y);
+    const zf = zoomFrame(frame, z);
+    // (x, y) at the fit is this base point; under the new zoom it lands back on (x, y).
+    expect(zf.cx + (x - frame.cx) * z.k).toBeCloseTo(x, 9);
+    expect(zf.cy + (y - frame.cy) * z.k).toBeCloseTo(y, 9);
+  });
+
+  it("never zooms out past the fit, snaps home there, and caps the zoom", () => {
+    expect(clampZoom({ k: 0.6, x: 40, y: 40 }, frame)).toEqual(IDENTITY_ZOOM);
+    expect(clampZoom({ k: 1.01, x: 40, y: 40 }, frame)).toEqual(IDENTITY_ZOOM);
+    expect(clampZoom({ k: 50, x: 0, y: 0 }, frame).k).toBe(MAX_ZOOM);
+    const far = clampZoom({ k: 2, x: 1e6, y: -1e6 }, frame);
+    expect(far.x).toBe(frame.scale * 2);
+    expect(far.y).toBe(-frame.scale * 2);
+  });
+
+  it("finds the ayah under the pointer on a zoomed, panned view", () => {
+    const { targets } = ringTargets(selection, "stacked", "mushaf", frame);
+    const counts = new Map(selection.surahs.map((s) => [s.n, s.ayahCount]));
+    const live = new Map<number, LiveRing>();
+    for (const [n, t] of targets) if (t.half > 0) live.set(n, { ...t, rot: 0.4 });
+    const z = { k: 3, x: -120, y: 80 };
+    const zf = zoomFrame(frame, z);
+    const zl = zoomRings(live, z.k);
+    const surah = 2;
+    const ayah = 140;
+    const pos = (ayah - 0.5) / counts.get(surah)!;
+    const a = angleAt(pos, 0.4);
+    const r = zl.get(surah)!.r;
+    expect(hitTest(zf.cx + Math.cos(a) * r, zf.cy + Math.sin(a) * r, zf, zl, counts)).toEqual({ surah, ayah });
+  });
+
+  it("reports the ring thickness, so a zoom can un-thin the rings", () => {
+    const layout = ringTargets(selection, "all", "mushaf", frameFor(390, 560));
+    expect(layout.thin).toBe(true);
+    // Enough zoom makes every ring thick enough for one slot per root.
+    const k = Math.ceil(THIN_RING_PX / (layout.half * 2));
+    expect(layout.half * 2 * k).toBeGreaterThanOrEqual(THIN_RING_PX);
   });
 });
 

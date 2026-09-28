@@ -28,7 +28,9 @@ interface VizControlContextType {
 
 const VizControlContext = createContext<VizControlContextType | undefined>(undefined);
 
-const MOBILE_QUERY = "(max-width: 900px)";
+// Must match the CSS breakpoint every shell piece switches layout at (980px),
+// or 901–980px gets desktop panel state inside a phone layout.
+const MOBILE_QUERY = "(max-width: 980px)";
 
 function subscribeMobileQuery(cb: () => void) {
     const mql = window.matchMedia(MOBILE_QUERY);

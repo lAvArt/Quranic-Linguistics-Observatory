@@ -34,9 +34,10 @@ export interface ColorThemePreset {
 export const DEFAULT_COLOR_THEME_ID: ColorThemeId = "teal-amber";
 export const DEFAULT_CUSTOM_COLOR_THEME: CustomColorTheme = {
   light: {
+    // Teal, amber, violet: the dark theme's families, deepened for parchment.
     accent: "#0f766e",
-    accent2: "#f59e0b",
-    accent3: "#1d4ed8",
+    accent2: "#b45309",
+    accent3: "#6d28d9",
     bg0: "#f7f3ea",
     bg1: "#efe6d6",
     bg2: "#e6dcc9",
@@ -57,13 +58,13 @@ export const COLOR_THEME_PRESETS: readonly ColorThemePreset[] = [
   {
     id: "teal-amber",
     labelKey: "tealAmber",
-    preview: ["#0f766e", "#f59e0b", "#1d4ed8"],
+    preview: ["#0f766e", "#b45309", "#6d28d9"],
     light: {
       accent: "#0f766e",
-      accent2: "#f59e0b",
-      accent3: "#1d4ed8",
+      accent2: "#b45309",
+      accent3: "#6d28d9",
       accentGlow: "rgba(15, 118, 110, 0.4)",
-      accent2Glow: "rgba(245, 158, 11, 0.45)",
+      accent2Glow: "rgba(180, 83, 9, 0.45)",
     },
     dark: {
       // Observatory dark — warm amber primary, teal + violet secondaries.

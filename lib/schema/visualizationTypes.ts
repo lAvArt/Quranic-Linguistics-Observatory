@@ -256,61 +256,66 @@ export interface VisualizationTheme {
   };
 }
 
+// Observatory tokens (see app/[locale]/globals.css and styles/dark-theme.css).
+// resolveVisualizationTheme overrides the accents, canvas and ink from the live
+// CSS variables, so these are the fallbacks — and the source of the node,
+// edge and glow values it doesn't override. They used to be the old design's
+// red / blue / orange-500 set.
 export const DARK_THEME: VisualizationTheme = {
   name: "dark",
-  background: "#0a0a0f",
-  foreground: "#ffffff",
-  accent: "#ef4444",
-  accentSecondary: "#3b82f6",
+  background: "#0e161a",
+  foreground: "#ece4d8",
+  accent: "#e8924a",
+  accentSecondary: "#56a697",
   nodeColors: {
-    default: "#ffffff",
-    highlighted: "#ef4444",
-    selected: "#f97316",
-    muted: "#374151",
+    default: "#ece4d8",
+    highlighted: "#e8924a",
+    selected: "#fbead2",
+    muted: "#2c3b42",
   },
   edgeColors: {
-    default: "rgba(255, 255, 255, 0.15)",
-    highlighted: "rgba(239, 68, 68, 0.8)",
-    muted: "rgba(255, 255, 255, 0.05)",
+    default: "rgba(236, 228, 216, 0.15)",
+    highlighted: "rgba(232, 146, 74, 0.8)",
+    muted: "rgba(236, 228, 216, 0.05)",
   },
   glowColors: {
-    primary: "#ef4444",
-    secondary: "#f97316",
-    accent: "#ec4899",
+    primary: "#e8924a",
+    secondary: "#56a697",
+    accent: "#8e84cc",
   },
   textColors: {
-    primary: "#ffffff",
-    secondary: "rgba(255, 255, 255, 0.9)",
-    muted: "rgba(255, 255, 255, 0.65)",
+    primary: "#ece4d8",
+    secondary: "rgba(236, 228, 216, 0.72)",
+    muted: "rgba(236, 228, 216, 0.55)",
   },
 };
 
 export const LIGHT_THEME: VisualizationTheme = {
   name: "light",
-  background: "#f8f4ec",
-  foreground: "#1c1917",
+  background: "#f7f3ea",
+  foreground: "#1f1c19",
   accent: "#0f766e",
-  accentSecondary: "#1d4ed8",
+  accentSecondary: "#b45309",
   nodeColors: {
-    default: "#334155",
+    default: "#3a4447",
     highlighted: "#0f766e",
-    selected: "#ea580c",
-    muted: "#d1d5db",
+    selected: "#1f1c19",
+    muted: "#d9d1c1",
   },
   edgeColors: {
-    default: "rgba(28, 25, 23, 0.15)",
+    default: "rgba(31, 28, 25, 0.15)",
     highlighted: "rgba(15, 118, 110, 0.8)",
-    muted: "rgba(28, 25, 23, 0.05)",
+    muted: "rgba(31, 28, 25, 0.05)",
   },
   glowColors: {
     primary: "#0f766e",
-    secondary: "#ea580c",
-    accent: "#db2777",
+    secondary: "#b45309",
+    accent: "#6d28d9",
   },
   textColors: {
-    primary: "#1c1917",
-    secondary: "rgba(28, 25, 23, 0.7)",
-    muted: "rgba(28, 25, 23, 0.4)",
+    primary: "#1f1c19",
+    secondary: "rgba(31, 28, 25, 0.7)",
+    muted: "rgba(31, 28, 25, 0.45)",
   },
 };
 
@@ -384,12 +389,12 @@ export const CATEGORY_COLORS = {
 // "selected" state never collides with a part-of-speech color.
 export const SELECTION_RING = "#fbead2";
 
+// Ramps drawn from the data spectrum above, cool to warm. (These were stock
+// Tailwind ramps — red, blue, cyan, indigo — from the old design.)
 export const GRADIENT_PALETTES = {
-  warm: ["#ef4444", "#f97316", "#f59e0b", "#eab308"],
-  cool: ["#3b82f6", "#06b6d4", "#14b8a6", "#22c55e"],
-  vibrant: ["#ec4899", "#8b5cf6", "#3b82f6", "#06b6d4"],
-  earth: ["#78350f", "#a16207", "#65a30d", "#0f766e"],
-  night: ["#1e1b4b", "#312e81", "#4338ca", "#6366f1"],
+  warm: ["#dd6a47", "#e8924a", "#e6c24e"],
+  cool: ["#8e84cc", "#56a697", "#9fd4c4"],
+  vibrant: ["#8e84cc", "#56a697", "#e6c24e", "#e8924a"],
 };
 
 // ============================================================================

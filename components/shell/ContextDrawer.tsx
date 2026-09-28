@@ -108,6 +108,34 @@ export default function ContextDrawer({
     setActiveTab(tab);
   }, []);
 
+  // Phone sheet: drag the grip down to close it (or tap it). The sheet follows
+  // the finger, then either closes or springs back.
+  const sheetRef = useRef<HTMLElement>(null);
+  const dragRef = useRef<{ y0: number; dy: number } | null>(null);
+  const onGripDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    dragRef.current = { y0: e.clientY, dy: 0 };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+  const onGripMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    const sheet = sheetRef.current;
+    if (!drag || !sheet) return;
+    drag.dy = Math.max(0, e.clientY - drag.y0);
+    sheet.style.transition = "none";
+    sheet.style.transform = `translateY(${drag.dy}px)`;
+  }, []);
+  const onGripUp = useCallback(() => {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    const sheet = sheetRef.current;
+    if (sheet) {
+      sheet.style.transition = "";
+      sheet.style.transform = "";
+    }
+    // A tap or a real pull closes it; a small nudge springs back.
+    if (drag && (drag.dy < 6 || drag.dy > 70)) onToggleOpen();
+  }, [onToggleOpen]);
+
   // Hovering a graph element while NOT on the Inspect tab → show a hint there,
   // rather than yanking the user to a different section.
   const showInspectHint = Boolean(inspectorToken) && inspectorMode === "hover" && activeTab !== "inspect";
@@ -137,10 +165,35 @@ export default function ContextDrawer({
         </svg>
       </button>
       <aside
+        ref={sheetRef}
         className={`context-drawer ${isOpen ? "open" : ""}`}
         aria-label={t("label")}
         data-tour-id="context-drawer"
       >
+      {/* Phone only: the sheet's own way out — a grip to pull down or tap,
+          and an explicit close — so hiding it never depends on finding the
+          toggle in the bottom bar. */}
+      <div
+        className="drawer-sheet-head"
+        onPointerDown={onGripDown}
+        onPointerMove={onGripMove}
+        onPointerUp={onGripUp}
+        onPointerCancel={onGripUp}
+      >
+        <span className="drawer-sheet-grip" aria-hidden="true" />
+        <button
+          type="button"
+          className="drawer-sheet-close"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onToggleOpen}
+          aria-label={t("collapse")}
+          title={t("collapse")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
       <div className="drawer-tabs" role="tablist" aria-label={t("panelLabel")}>
         {tabs.map((tab) => {
           const hinted = tab.id === "inspect" && showInspectHint;
@@ -353,9 +406,12 @@ export default function ContextDrawer({
           100% { box-shadow: 0 0 0 0 rgba(232, 146, 74, 0); }
         }
 
-        .drawer-tab:hover {
-          color: var(--ink);
-          background: color-mix(in srgb, var(--selection) 5%, transparent);
+        /* Hover only where there is one: on touch, :hover sticks after a tap. */
+        @media (hover: hover) {
+          .drawer-tab:hover {
+            color: var(--ink);
+            background: color-mix(in srgb, var(--selection) 5%, transparent);
+          }
         }
 
         .drawer-tab.active {
@@ -408,6 +464,10 @@ export default function ContextDrawer({
           border-color: var(--accent);
         }
 
+        .drawer-sheet-head {
+          display: none;
+        }
+
         @media (max-width: 980px) {
           .context-drawer {
             top: auto;
@@ -425,6 +485,63 @@ export default function ContextDrawer({
 
           .context-drawer.open {
             transform: translateY(0);
+          }
+
+          .drawer-sheet-head {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            height: 30px;
+            touch-action: none;
+            cursor: grab;
+          }
+
+          .drawer-sheet-grip {
+            width: 40px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--ink-muted);
+            opacity: 0.55;
+          }
+
+          .drawer-sheet-close {
+            position: absolute;
+            top: 2px;
+            inset-inline-end: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--ink-secondary);
+            cursor: pointer;
+          }
+
+          .drawer-sheet-close:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: -2px;
+          }
+
+          .drawer-tabs {
+            margin-top: 0;
+          }
+
+          /* The bottom bar floats over the sheet's lower edge; pad the scroll
+             area so its last rows can be scrolled clear of it. */
+          .drawer-content {
+            padding-bottom: calc(24px + var(--mobile-tools-bar-clearance, 90px));
+          }
+        }
+
+        @media (hover: hover) {
+          .drawer-sheet-close:hover {
+            color: var(--ink);
+            background: color-mix(in srgb, var(--selection) 8%, transparent);
           }
         }
       `}</style>

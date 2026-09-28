@@ -309,7 +309,7 @@ describe("loadFullCorpus cache trust", () => {
     expect(h.corpusCache.getAllTokens).not.toHaveBeenCalled();
   });
 
-  it("keeps a fresh partial-only cache alive through the TTL policy check (no wipe on every load)", async () => {
+  it("keeps a fresh partial-only cache alive through the policy check (no wipe on every load)", async () => {
     seedCachedTokens(makeTokens(30, 1));
     seedMetadata("corpus:partial", {
       tokenCount: 30,
@@ -320,17 +320,17 @@ describe("loadFullCorpus cache trust", () => {
     const { loadFullCorpus } = await importLoader();
     await expect(loadFullCorpus()).rejects.toThrow();
 
-    // The partial cache is not full — but it is fresh, so the TTL policy must
-    // not clear it (loadSurahs still serves the embed from it).
+    // The partial cache is not full, but nothing about it is stale, so the
+    // policy must not clear it (loadSurahs still serves the embed from it).
     expect(h.corpusCache.clearCorpusData).not.toHaveBeenCalled();
     expect(h.state.tokens.size).toBe(30);
   });
 
-  it("clears an expired cache via the TTL policy", async () => {
+  it("never expires a cache by age: the corpus is downloaded once", async () => {
     seedCachedTokens(makeTokens(30, 1));
     h.state.metadata.set("corpus:partial", {
       key: "corpus:partial",
-      lastUpdated: Date.now() - WEEK_MS - 60_000,
+      lastUpdated: Date.now() - 52 * WEEK_MS,
       tokenCount: 30,
       hasMorphology: true,
       morphologyVersion: CURRENT_MORPHOLOGY_VERSION,
@@ -339,8 +339,8 @@ describe("loadFullCorpus cache trust", () => {
     const { loadFullCorpus } = await importLoader();
     await expect(loadFullCorpus()).rejects.toThrow();
 
-    expect(h.corpusCache.clearCorpusData).toHaveBeenCalled();
-    expect(h.state.tokens.size).toBe(0);
+    expect(h.corpusCache.clearCorpusData).not.toHaveBeenCalled();
+    expect(h.state.tokens.size).toBe(30);
   });
 });
 

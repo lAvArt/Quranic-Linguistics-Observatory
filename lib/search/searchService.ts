@@ -63,6 +63,27 @@ function pushBucket(map: Map<string, CorpusToken[]>, key: string, token: CorpusT
   map.set(key, [token]);
 }
 
+/**
+ * One catalog per token array, shared by every search surface. The shell mounts
+ * several (the top bar and two drawer tabs), and each used to build its own
+ * copy in a render — three full index builds on the main thread every time the
+ * corpus landed, which was most of a phone's page load.
+ */
+const catalogs = new WeakMap<CorpusToken[], SearchCatalog>();
+
+export function getSearchCatalog(tokens: CorpusToken[]): SearchCatalog {
+  let catalog = catalogs.get(tokens);
+  if (!catalog) {
+    catalog = buildSearchCatalog(tokens);
+    catalogs.set(tokens, catalog);
+  }
+  return catalog;
+}
+
+export function hasSearchCatalog(tokens: CorpusToken[]): boolean {
+  return catalogs.has(tokens);
+}
+
 export function buildSearchCatalog(tokens: CorpusToken[]): SearchCatalog {
   const byId = new Map<string, CorpusToken>();
   const byRoot = new Map<string, CorpusToken[]>();

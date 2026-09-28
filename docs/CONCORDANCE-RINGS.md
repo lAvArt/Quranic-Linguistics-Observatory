@@ -105,6 +105,8 @@ The rings move in two ways. They **turn**, which is aligning: a ring's angle cha
 
 - **Hovering a tick** shows the surah, the ayah reference and the full ayah text, with the words carrying the chosen roots coloured. In the overlaid view, hovering a position lists the ayahs that fall there.
 - **Clicking a ring** dims the others and draws that surah's own root wiring inside it, as `radial-sura` does for one surah. A card lists how many ayahs hold each root and where they meet, and links to the surah's radial view.
+- **Zooming.** Pinch, scroll (or pinch on a trackpad) or double-tap to zoom in, up to 8×; drag to move around once zoomed; **Full view**, a double tap or `0` returns. `+` and `−` zoom from the keyboard. Zoom scales the rings, not the labels, and once the rings are thick enough every tick shows each root's slot instead of only the first.
+- **On a touch screen**, where there is no hover: a tap reads out the ayah under the finger, a second tap on the same ring opens its card, and a finger dragged across the rings at the full view reads out each ayah it passes.
 
 ![A selected ring with its internal wiring, the surah card, and an ayah tooltip with the chosen roots coloured](../public/docs/images/concordance-rings/05-selected-ring.png)
 
@@ -145,7 +147,7 @@ Measured with Playwright under GPU rasterisation at 2× density:
 - **Embeds and the graph gallery.** `/embed/concordance-rings` renders the mode on its own, with the same `roots` and `view` parameters, and the mode has an entry in the indexable graph gallery (`lib/seo/vizGallery.ts`), whose still is built by `npm run graphs:build`. The mode loads its own data, so neither waits for the corpus tokens.
 - **Shell.** Controls render into the sidebar portal. The selected-ring card, and the list of meetings when no ring is selected, render into the details panel through `#viz-context-portal`, a slot added to the context drawer for this. Root colours are the theme-stable `--viz-root-1..3` and `--viz-meeting` tokens: three roots need three categorical colours, and `--viz-cat-*` has two. The rings fit the part of the stage the shell's chrome leaves visible (`getVisibleArea` in `lib/viz/fitToView.ts`). Toggles are custom switches, not native checkboxes.
 - **Accessibility.** Keyboard steps between rings and ticks. A text alternative lists the meeting ayahs as a table. With `prefers-reduced-motion`, the rings align without animating.
-- **Mobile.** Below about 700 px rings get too thin to read, so open in the overlaid view or cap the ring count.
+- **Mobile.** Below about 700 px rings get too thin to read, so the mode opens in the overlaid view; the stacked view is a pinch away. The controls are in the Controls sheet and the surah card in the Details sheet. Below a 520 px square the scale and histogram slim down to give the rings about a sixth more radius. See `docs/MOBILE-AUDIT.md` for the measurements.
 - **Credit.** The footer credits Kais Dukes and the Quranic Arabic Corpus, as on every page.
 
 ## Open questions

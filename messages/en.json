@@ -215,8 +215,8 @@
         "close": "Close drawer",
         "scan": "Live scanner",
         "hideScan": "Hide scanner",
-        "expand": "Show tools",
-        "collapse": "Hide tools"
+        "expand": "Show details",
+        "collapse": "Hide details"
     },
     "Footer": {
         "github": "GitHub",
@@ -297,9 +297,9 @@
             "fallbackTitle": "Using fallback corpus data",
             "fallbackDescription": "Explore remains available, but some deeper results may be limited until the full dataset is reachable.",
             "loadingTitle": "Loading the full corpus",
-            "loadingDescription": "You can start exploring now with shell-ready data across {surahCount} surahs. Some cross-corpus views may sharpen as the remaining data finishes loading.",
-            "shellReadyTitle": "Shell-ready exploration is active",
-            "shellReadyDescription": "You can browse {surahCount} surahs and {rootCount} indexed roots immediately while deeper corpus data loads on demand.",
+            "loadingDescription": "You can start exploring now across {surahCount} surahs. Views that span the whole corpus fill in as the rest of it arrives.",
+            "shellReadyTitle": "Ready to explore",
+            "shellReadyDescription": "You can browse {surahCount} surahs and {rootCount} roots now; the rest of the corpus loads as you need it.",
             "searchUnavailableTitle": "Search is temporarily limited",
             "searchUnavailableDescription": "Quick exploration still works, but search-driven jumps may be reduced until the search service is reachable again.",
             "dismissContextTransform": "Dismiss",
@@ -321,11 +321,11 @@
         "status": {
             "full": "Full corpus ready",
             "fallback": "Fallback corpus",
-            "shell": "Shell ready"
+            "shell": "Preparing corpus"
         },
-        "shellReadyMessage": "Shell-ready exploration is active now across {surahCount} surahs and {rootCount} indexed roots.",
+        "shellReadyMessage": "You can search {surahCount} surahs and {rootCount} roots now; the rest of the corpus is on its way.",
         "fallbackMessage": "Using fallback corpus data while the full dataset is unavailable. Search remains usable, but some results may be limited.",
-        "loadingMessage": "Loading the full corpus. Search suggestions may be partial for a moment while the shell-ready dataset remains available.",
+        "loadingMessage": "Loading the full corpus. Until it arrives, some search suggestions may be missing.",
         "searchUnavailableMessage": "Search is temporarily limited. You can still browse the corpus index while search recovers.",
         "quickSearch": "Quick search",
         "currentResult": "Current result",
@@ -377,10 +377,12 @@
         "panelLabel": "Sidebar panels"
     },
     "MobileBottomBar": {
-        "showLegend": "Show Legend",
-        "hideLegend": "Hide Legend",
-        "showTools": "Show Tools",
-        "hideTools": "Hide Tools",
+        "showLegend": "Show legend and controls",
+        "hideLegend": "Hide legend and controls",
+        "showTools": "Show details",
+        "hideTools": "Hide details",
+        "controls": "Controls",
+        "details": "Details",
         "search": "Search"
     },
     "GlobalSearch": {
@@ -1097,7 +1099,8 @@
             "title": "Concordance Rings",
             "roleDescription": "concordance rings",
             "stageLabel": "Concordance rings: every surah a ring, every ayah a tick, lit where the chosen roots occur",
-            "keyboardHelp": "Up and down arrows move between rings, left and right between ayahs. Enter selects a ring; Escape clears.",
+            "keyboardHelp": "Up and down arrows move between rings, left and right between ayahs. Enter selects a ring; Escape clears. Plus and minus zoom; 0 returns to the full view.",
+            "resetZoom": "Full view",
             "rootsLabel": "Roots",
             "rootPlaceholder": "Add a root — Arabic, Buckwalter or meaning",
             "removeRoot": "Remove {root}",
@@ -1581,8 +1584,9 @@
             },
             "hint": {
                 "roots": "Choose up to three roots, or start from a recurring phrase.",
-                "hover": "Hover a tick for its surah, ayah and which roots occur there.",
-                "view": "Switch between the surahs that qualify and all 114."
+                "hover": "Hover or tap a tick for its surah, ayah and which roots occur there. Tap the same ring again to open its surah card.",
+                "view": "Switch between the surahs that qualify and all 114.",
+                "zoom": "Pinch, scroll or double-tap to zoom in, and drag to move around. Full view, or a double tap, brings the rings back."
             }
         }
     },

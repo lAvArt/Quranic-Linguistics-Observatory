@@ -578,9 +578,7 @@ export default function RootFlowSankey({
         .sankey-control-card {
           display: grid;
           gap: 10px;
-          background:
-            linear-gradient(160deg, var(--bg-1), var(--bg-2)),
-            radial-gradient(circle at 10% 12%, rgba(15, 118, 110, 0.11), transparent 46%);
+          background: linear-gradient(160deg, var(--bg-1), var(--bg-2));
         }
 
         .sankey-card-head {
@@ -886,10 +884,9 @@ export default function RootFlowSankey({
           position: relative;
           padding-top: calc(var(--header-dock-height, 42px) + 20px);
           padding-bottom: calc(var(--footer-height, 42px) + env(safe-area-inset-bottom) + 12px);
-          background:
-            radial-gradient(circle at 12% 18%, rgba(245, 158, 11, 0.12), transparent 34%),
-            radial-gradient(circle at 84% 16%, rgba(15, 118, 110, 0.1), transparent 36%),
-            linear-gradient(160deg, var(--bg-0), var(--bg-1));
+          /* Flat, like every other canvas since the glow pass: the amber and
+             cyan corner glows here were the last of the old design's. */
+          background: var(--bg-0);
         }
 
         /*
@@ -1058,13 +1055,6 @@ export default function RootFlowSankey({
         .sankey-more-inline:hover {
           background: var(--accent);
           color: var(--accent-ink);
-        }
-
-        :global([data-theme="dark"]) .sankey-wrapper {
-          background:
-            radial-gradient(circle at 16% 14%, rgba(249, 115, 22, 0.2), transparent 36%),
-            radial-gradient(circle at 82% 18%, rgba(34, 211, 238, 0.16), transparent 40%),
-            linear-gradient(165deg, var(--bg-0), var(--bg-1) 50%, var(--bg-0) 100%);
         }
 
         :global([data-theme="dark"]) .sankey-pill {

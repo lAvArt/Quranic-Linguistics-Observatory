@@ -63,10 +63,13 @@ export function frameFor(
   area: { x: number; y: number; width: number; height: number } = { x: 0, y: 0, width: w, height: h },
 ): Frame {
   const R = Math.min(area.width, area.height) / 2;
-  const scale = R - 26;
-  const histOuter = scale - 6;
-  const histInner = scale - 34;
-  const ringOuter = histInner - 8;
+  // On a phone the fixed margins below took a third of the radius from the
+  // rings; a slimmer scale and histogram give it back.
+  const compact = R < 260;
+  const scale = R - (compact ? 22 : 26);
+  const histOuter = scale - (compact ? 4 : 6);
+  const histInner = scale - (compact ? 22 : 34);
+  const ringOuter = histInner - (compact ? 6 : 8);
   const ringInner = Math.max(40, ringOuter * 0.22);
   return { cx: area.x + area.width / 2, cy: area.y + area.height / 2, scale, histInner, histOuter, ringInner, ringOuter };
 }
@@ -91,7 +94,7 @@ export function ringTargets(
   view: View,
   order: RingOrder,
   frame: Frame,
-): { targets: Map<number, RingTarget>; order: number[]; thin: boolean } {
+): { targets: Map<number, RingTarget>; order: number[]; thin: boolean; half: number } {
   const shown: SurahHit[] =
     view === "all" ? selection.surahs : view === "stacked" ? selection.qualifying : [];
   const ordered = orderRings(shown, order);
@@ -112,7 +115,74 @@ export function ringTargets(
   for (const s of selection.surahs) {
     if (!targets.has(s.n)) targets.set(s.n, { r: NaN, half: 0, alpha: 0 });
   }
-  return { targets, order: ordered.map((s) => s.n), thin: half * 2 < THIN_RING_PX };
+  return { targets, order: ordered.map((s) => s.n), thin: half * 2 < THIN_RING_PX, half };
+}
+
+// ── Zoom ────────────────────────────────────────────────────────────────────
+
+/**
+ * Pinch, wheel and double-tap zoom. A view zoom scales the rings about the
+ * frame's centre by `k`, then pans them by (x, y) stage pixels:
+ *   screen = centre + (p − centre)·k + (x, y)
+ * It is applied at draw time — to the frame's radii and to every ring's radius
+ * and thickness — so layout, motion and hit-testing stay in unzoomed units, and
+ * text and line widths keep their size (the rings grow; the labels don't).
+ */
+export interface ViewZoom {
+  k: number;
+  x: number;
+  y: number;
+}
+
+export const IDENTITY_ZOOM: ViewZoom = { k: 1, x: 0, y: 0 };
+export const MAX_ZOOM = 8;
+
+export function zoomFrame(f: Frame, z: ViewZoom): Frame {
+  if (z.k === 1 && z.x === 0 && z.y === 0) return f;
+  return {
+    cx: f.cx + z.x,
+    cy: f.cy + z.y,
+    scale: f.scale * z.k,
+    histInner: f.histInner * z.k,
+    histOuter: f.histOuter * z.k,
+    ringInner: f.ringInner * z.k,
+    ringOuter: f.ringOuter * z.k,
+  };
+}
+
+export function zoomRings<T extends { r: number; half: number }>(rings: Map<number, T>, k: number): Map<number, T> {
+  if (k === 1) return rings;
+  const out = new Map<number, T>();
+  for (const [n, ring] of rings) out.set(n, { ...ring, r: ring.r * k, half: ring.half * k });
+  return out;
+}
+
+/**
+ * Fold a live screen transform (q → s·q + d, what a gesture applies as a CSS
+ * transform while it runs) into a committed zoom, measured on the UNZOOMED
+ * frame `f`.
+ */
+export function composeZoom(z: ViewZoom, f: Frame, s: number, dx: number, dy: number): ViewZoom {
+  return { k: z.k * s, x: dx + s * (f.cx + z.x) - f.cx, y: dy + s * (f.cy + z.y) - f.cy };
+}
+
+/**
+ * Keep a zoom usable: never smaller than the fit, never past MAX_ZOOM, and
+ * never panned so far that the rings leave the stage. Back at the fit it snaps
+ * home, so "zoomed out" always means centred.
+ */
+export function clampZoom(z: ViewZoom, f: Frame): ViewZoom {
+  const k = Math.min(MAX_ZOOM, Math.max(1, z.k));
+  if (k < 1.02) return IDENTITY_ZOOM;
+  const reach = f.scale * k;
+  const clamp = (v: number) => Math.max(-reach, Math.min(reach, v));
+  return { k, x: clamp(z.x), y: clamp(z.y) };
+}
+
+/** The live transform that takes a committed zoom to `to`, for animating between them. */
+export function transformBetween(from: ViewZoom, to: ViewZoom, f: Frame): { s: number; dx: number; dy: number } {
+  const s = to.k / from.k;
+  return { s, dx: to.x + f.cx - s * (f.cx + from.x), dy: to.y + f.cy - s * (f.cy + from.y) };
 }
 
 // ── Ticks ───────────────────────────────────────────────────────────────────
