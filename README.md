@@ -347,6 +347,10 @@ docs/                Product, schema, roadmap, and release documentation
 - [docs/VIZ_ARCHITECTURE.md](docs/VIZ_ARCHITECTURE.md)
 - [docs/CONCORDANCE-RINGS.md](docs/CONCORDANCE-RINGS.md) — the Concordance Rings mode:
   spec, figures, motion and rendering notes
+- [docs/MOBILE-AUDIT.md](docs/MOBILE-AUDIT.md) — phone audit (2026-09-28): corpus loading,
+  touch and zoom, menus, colours, with before/after measurements
+- [docs/COLLOCATION-AR.md](docs/COLLOCATION-AR.md) — Arabic feature article on
+  collocation: the network graph, the الجوار panel, `قرب:`, and the home pair search
 - [docs/ROOT-GLOSS-GAPS.md](docs/ROOT-GLOSS-GAPS.md) — generated worklist of roots
   still missing an English gloss, ranked by share of the text (`npm run data:root-dist`)
 

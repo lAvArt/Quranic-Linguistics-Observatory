@@ -2060,7 +2060,9 @@ export default function RadialSuraMap({
                         const isDimmed = !!highlightRoot && node.root !== highlightRoot;
                         const displayRadius = isRootHighlighted ? node.r + 0.7 : node.r;
                         const tintColor = isDimmed ? dimTone(node.baseColor, 1) : node.baseColor;
-                        const highlightedRootColor = theme === "dark" ? "#FFD166" : "#E27B13";
+                        // The reserved selection colour, not a yellow that read as
+                        // the particle hue from the part-of-speech spectrum.
+                        const highlightedRootColor = theme === "dark" ? SELECTION_RING : "#1f1c19";
 
                         const shouldShowRootLabel =
                           isRootHighlighted ||

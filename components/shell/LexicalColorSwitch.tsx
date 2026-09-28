@@ -26,9 +26,11 @@ export default function LexicalColorSwitch({ mode, onChange }: LexicalColorSwitc
   return (
     <div className="lex-switch" role="group" aria-label={t("coloring.title")}>
       <span className="lex-switch-dots" aria-hidden="true">
-        <i style={{ background: "#5e9cea" }} />
-        <i style={{ background: "#5dbe83" }} />
-        <i style={{ background: "#e57bc0" }} />
+        {/* Three hues of the data spectrum (CATEGORY_COLORS) — the old app's
+            blue / green / pink before. */}
+        <i style={{ background: "#e8924a" }} />
+        <i style={{ background: "#56a697" }} />
+        <i style={{ background: "#d06a86" }} />
       </span>
       {MODES.map((m) => (
         <button

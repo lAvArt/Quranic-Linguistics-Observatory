@@ -58,8 +58,19 @@ The one canvas mode. Spec, figures, performance notes and the animated recording
 | Not yet | the alternative turn anchors (last meeting, one root's first occurrence, median meeting) |
 
 Three canvases: a 2D back layer (scale, marker, histogram, threads), the WebGL
-ticks, and a 2D front layer (selection wiring, hover outline). While rings move,
-only a 2×128 texture of ring positions changes per frame. 60 fps on a real GPU.
+ticks, and a 2D front layer (selection wiring, hover outline). Each redraws only
+when something it shows changes (`kick(BACK | TICKS | FRONT)`): hover and taps touch
+the front layer only. While rings move, only a 2×128 texture of ring positions
+changes per frame. 60 fps on a real GPU.
+
+Zoom (`ViewZoom` in `geometry.ts`) is applied at draw time to the frame's radii and
+every ring's radius and thickness, so layout, motion and hit-testing stay unzoomed
+and labels keep their size. During a pinch, pan or wheel burst the canvases move
+as one CSS transform on `.cr-layers` (a composite, no redraws); on release the
+transform is folded into the zoom (`composeZoom`) and redrawn in the same task.
+Touch: tap reads out an ayah, a second tap on the same ring selects it, a double
+tap zooms; a drag pans when zoomed and scrubs at the fit. Zooming in un-thins the
+rings (`half · k` against `THIN_RING_PX`).
 Measure with `--use-angle=d3d11`: headless Chromium otherwise uses SwiftShader and
 reports about a quarter of that.
 
@@ -117,6 +128,18 @@ Shell mechanisms this mode added, available to any mode:
   `DisplaySettingsPanel` instance in AppShell whose mobile section also hosts
   LexicalColorSwitch + VizExportMenu). MobileNavMenu also carries Search/Study/Quiz
   links. Marketing `ui/Footer.tsx` stays hidden on mobile for the observatory view.
+  Since the 2026-09-28 mobile audit (`docs/MOBILE-AUDIT.md`): the two sheet toggles
+  are labelled **Controls** (left panel: legend + controls) and **Details** (the
+  ContextDrawer); the quick views hide below 440px. One breakpoint, 980px, in JS
+  (`VizControlContext` MOBILE_QUERY) and CSS. On a phone: no edge swipes (both
+  panels are bottom sheets, and the screen edge is iOS's back gesture); the dock's
+  collapsed state never applies (hiding the panel closes the sheet); the Details
+  sheet has a grip (tap or pull down) and a close button; the intro chip is hidden
+  below 640px. Hover styles sit behind `@media (hover: hover)`.
+- **Portals**: resolve `#viz-sidebar-portal` / `#viz-context-portal` with
+  `usePortalTarget(id)` (`lib/hooks/usePortalTarget.ts`), not `getElementById` in
+  render — on a phone the sidebar slot mounts only while its sheet is open, and a
+  render-time lookup never sees it (the rings' Controls sheet was empty).
 - **Onboarding**: `onboarding/FirstRunMission.tsx` (intent selection; suppresses intro chip),
   `MissionChecklist.tsx`.
 
@@ -463,9 +486,17 @@ Known, deliberately deferred (next iterations):
   other vizzes. Dependency-tree mobile still leaves dead space above the tree.
 - Mobile leftovers (2026-07-24 pass): the Ayah quick-filter placeholder still clips
   ("Ayah (e.g") at 390px; surah-distribution chart renders small with dead space on
-  mobile (needs a viz-level responsive margin pass); the 900px (VizControlContext
-  MOBILE_QUERY) vs 980/981px (CSS) breakpoint mismatch means 900–980px gets desktop
-  drawer state with mobile layout — unify when touching shell state next.
+  mobile (needs a viz-level responsive margin pass). (The 900 vs 980px breakpoint
+  mismatch listed here was fixed in the 2026-09-28 mobile audit.)
+- **Mobile audit 2026-09-28** — `docs/MOBILE-AUDIT.md`: corpus load (search index
+  built three times per page load; 7-day cache expiry; sequential Supabase pages),
+  the rings on touch, the sheets and swipes, colours from the old design. Its
+  "Still open" list carries on from here: Sankey top pinning, dependency-tree
+  clipping, radial slightly wider than 390px, corpus-dependent modes sparse on a
+  first visit.
+- **Fit-to-view on phones**: `getVisibleArea` / `fitBoundsToView` ignore a floating
+  panel wider than 60% of the canvas (an overlay sheet, not a column — fitting
+  beside it pushed the rings to x≈78) and count the intro chip as top chrome.
 
 ## Review checklist for viz changes
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { trackPerformanceMetric, trackSearchRecoveryShown } from "@/lib/analytics/events";
 import CommandBar from "@/components/search/CommandBar";
@@ -33,6 +33,11 @@ const SURAH_PAGE_SIZE = 8;
 
 export default function SearchWorkspace({ initialCorpusData }: SearchWorkspaceProps) {
   const t = useTranslations("SearchWorkspace");
+  // Numbers in the page's locale, not the runtime's: a bare toLocaleString()
+  // used the server's own locale (Arabic digits on this machine) and the
+  // browser's on the client, so the page failed to hydrate.
+  const locale = useLocale();
+  const nf = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const tGlobal = useTranslations("GlobalSearch");
   const tSelection = useTranslations("CurrentSelectionPanel");
   const tShared = useTranslations("Visualizations.Shared");
@@ -287,7 +292,7 @@ export default function SearchWorkspace({ initialCorpusData }: SearchWorkspacePr
       {
         key: "tokens",
         label: hasSearchInput ? t("snapshot.matches") : t("snapshot.ready"),
-        value: (hasSearchInput ? search.results.length : allTokens.length).toLocaleString(),
+        value: nf.format((hasSearchInput ? search.results.length : allTokens.length)),
         // Note: the "try a query" example (searchPrimerHint) is surfaced once,
         // as the standalone hint line below the cards — this detail must stay
         // distinct so the example text isn't shown twice on screen.
@@ -365,7 +370,7 @@ export default function SearchWorkspace({ initialCorpusData }: SearchWorkspacePr
       : statusPresentation.showShellReadyMessage
         ? t("shellReadyMessage", {
             surahCount: overview.surahCount,
-            rootCount: overview.rootCount.toLocaleString(),
+            rootCount: nf.format(overview.rootCount),
           })
         : null;
 
@@ -458,19 +463,19 @@ export default function SearchWorkspace({ initialCorpusData }: SearchWorkspacePr
                 <div className="workspace-root-metrics">
                   <div className="workspace-root-metric">
                     <span>{t("surahInsight.verses")}</span>
-                    <strong>{surahInsight.verses.toLocaleString()}</strong>
+                    <strong>{nf.format(surahInsight.verses)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{t("surahInsight.words")}</span>
-                    <strong>{surahInsight.tokenCount.toLocaleString()}</strong>
+                    <strong>{nf.format(surahInsight.tokenCount)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{t("surahInsight.roots")}</span>
-                    <strong>{surahInsight.rootCount.toLocaleString()}</strong>
+                    <strong>{nf.format(surahInsight.rootCount)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{t("surahInsight.lemmas")}</span>
-                    <strong>{surahInsight.lemmaCount.toLocaleString()}</strong>
+                    <strong>{nf.format(surahInsight.lemmaCount)}</strong>
                   </div>
                 </div>
 
@@ -529,26 +534,26 @@ export default function SearchWorkspace({ initialCorpusData }: SearchWorkspacePr
                     {rootInsight.gloss ? <p className="workspace-root-gloss">{rootInsight.gloss}</p> : null}
                   </div>
                   <span className="workspace-root-badge">
-                    {tSemantic("rootInfo.occurrences", { count: rootInsight.occurrences.toLocaleString() })}
+                    {tSemantic("rootInfo.occurrences", { count: nf.format(rootInsight.occurrences) })}
                   </span>
                 </div>
 
                 <div className="workspace-root-metrics">
                   <div className="workspace-root-metric">
                     <span>{tMorph("rootDistribution.stats.occurrences")}</span>
-                    <strong>{rootInsight.occurrences.toLocaleString()}</strong>
+                    <strong>{nf.format(rootInsight.occurrences)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{tSemantic("rootInfo.stats.surahs")}</span>
-                    <strong>{rootInsight.surahCount.toLocaleString()}</strong>
+                    <strong>{nf.format(rootInsight.surahCount)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{tMorph("rootDistribution.stats.ayahs")}</span>
-                    <strong>{rootInsight.ayahCount.toLocaleString()}</strong>
+                    <strong>{nf.format(rootInsight.ayahCount)}</strong>
                   </div>
                   <div className="workspace-root-metric">
                     <span>{tSemantic("rootInfo.stats.lemmas")}</span>
-                    <strong>{rootInsight.lemmaCount.toLocaleString()}</strong>
+                    <strong>{nf.format(rootInsight.lemmaCount)}</strong>
                   </div>
                 </div>
 
@@ -1024,7 +1029,7 @@ export default function SearchWorkspace({ initialCorpusData }: SearchWorkspacePr
           display: block;
           height: 100%;
           border-radius: inherit;
-          background: linear-gradient(90deg, color-mix(in srgb, var(--accent), white 10%), #f97316);
+          background: var(--accent);
         }
 
         .workspace-surah-meta {

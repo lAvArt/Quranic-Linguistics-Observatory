@@ -24,11 +24,13 @@ label {
   --panel: rgba(255, 255, 255, 0.78);
   --panel-border: rgba(31, 28, 25, 0.08);
   --line: rgba(31, 28, 25, 0.12);
+  /* Teal, amber and violet — the dark theme's three families, deepened for
+     parchment. (Amber-500 and blue-700 here were the old design's.) */
   --accent: #0f766e;
-  --accent-2: #f59e0b;
-  --accent-3: #1d4ed8;
+  --accent-2: #b45309;
+  --accent-3: #6d28d9;
   --accent-glow: rgba(15, 118, 110, 0.4);
-  --accent-2-glow: rgba(245, 158, 11, 0.45);
+  --accent-2-glow: rgba(180, 83, 9, 0.45);
   /* Theme-stable category colors — e.g. Makki/Madani in SurahDistributionGraph.
      Never bind a categorical encoding to --accent/--accent-2: those swap
      hues between light/dark (see dark-theme.css), so a category would read
@@ -479,21 +481,12 @@ body {
   mask-image: radial-gradient(circle at center, black 18%, transparent 86%);
 }
 
-.ui-workspace-shell-search .ui-workspace-atmosphere {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.06)),
-    linear-gradient(120deg, rgba(22, 29, 37, 0.018), transparent 40%, rgba(22, 29, 37, 0.012));
-}
-
-.ui-workspace-shell-search {
-  background:
-    linear-gradient(180deg, rgba(244, 247, 249, 0.96), rgba(238, 242, 245, 0.94));
-}
-
-.ui-workspace-shell-search .ui-shell-backdrop {
-  background:
-    linear-gradient(180deg, rgba(247, 249, 251, 0.92), rgba(238, 242, 246, 0.88)),
-    linear-gradient(105deg, rgba(17, 24, 39, 0.035), transparent 32%, rgba(17, 24, 39, 0.02) 52%, transparent 76%, rgba(17, 24, 39, 0.03));
+/* Search and Study sit on the same flat canvas as every other page. Each had
+   its own "atmosphere" from the old design — Search a cool grey-blue (navy in
+   dark), Study a sepia wash, and a dark page even in the light theme. */
+.ui-workspace-shell-search,
+.ui-workspace-shell-study {
+  background: var(--bg-0);
 }
 
 .ui-workspace-shell-search .ui-workspace-grid {
@@ -505,36 +498,6 @@ body {
   mask-image: linear-gradient(180deg, black 8%, transparent 88%);
 }
 
-.ui-workspace-shell-study .ui-workspace-atmosphere {
-  background:
-    linear-gradient(180deg, rgba(162, 129, 81, 0.05), transparent 32%),
-    linear-gradient(145deg, rgba(122, 94, 54, 0.04), rgba(255, 250, 240, 0.02) 40%, rgba(87, 69, 44, 0.035));
-}
-
-.ui-workspace-shell-study {
-  background:
-    linear-gradient(180deg, rgba(18, 20, 24, 0.98), rgba(11, 14, 18, 0.98));
-}
-
-.ui-workspace-shell-study .ui-shell-backdrop {
-  background:
-    linear-gradient(180deg, rgba(16, 18, 22, 0.96), rgba(10, 12, 16, 0.96)),
-    linear-gradient(110deg, rgba(255, 255, 255, 0.02), transparent 28%, rgba(15, 118, 110, 0.035) 52%, transparent 78%, rgba(255, 255, 255, 0.015));
-}
-
-.ui-workspace-shell-study .ui-workspace-grid {
-  opacity: 0.045;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      rgba(120, 92, 52, 0.028) 0,
-      rgba(120, 92, 52, 0.028) 1px,
-      transparent 1px,
-      transparent 18px
-    );
-  background-size: 100% 18px;
-  mask-image: linear-gradient(180deg, black 10%, transparent 92%);
-}
 
 [data-theme="dark"] .ui-workspace-shell::before {
   background:
@@ -549,11 +512,11 @@ body {
 }
 
 [data-theme="dark"] .ui-workspace-brand-kicker {
-  color: rgba(219, 226, 234, 0.62);
+  color: var(--ink-muted);
 }
 
 [data-theme="dark"] .ui-workspace-brand-title {
-  color: #f8fafc;
+  color: var(--ink);
 }
 
 [data-theme="dark"] .ui-workspace-grid {
@@ -562,34 +525,6 @@ body {
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
 }
 
-[data-theme="dark"] .ui-workspace-shell-search .ui-workspace-atmosphere {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 22%),
-    linear-gradient(120deg, rgba(9, 14, 22, 0.34), rgba(15, 23, 42, 0.22) 42%, rgba(9, 14, 22, 0.3));
-}
-
-[data-theme="dark"] .ui-workspace-shell-search {
-  background:
-    linear-gradient(180deg, rgba(12, 16, 20, 0.98), rgba(8, 11, 15, 0.98));
-}
-
-[data-theme="dark"] .ui-workspace-shell-search .ui-shell-backdrop {
-  background:
-    linear-gradient(180deg, rgba(13, 17, 21, 0.96), rgba(8, 11, 15, 0.96)),
-    linear-gradient(105deg, rgba(255, 255, 255, 0.028), transparent 34%, rgba(15, 23, 42, 0.12) 56%, transparent 80%, rgba(255, 255, 255, 0.018));
-}
-
-[data-theme="dark"] .ui-workspace-shell-study .ui-workspace-atmosphere {
-  background:
-    linear-gradient(180deg, rgba(182, 141, 72, 0.05), transparent 24%),
-    linear-gradient(145deg, rgba(38, 27, 16, 0.54), rgba(53, 40, 24, 0.32) 40%, rgba(26, 20, 12, 0.5));
-}
-
-[data-theme="dark"] .ui-workspace-shell-study .ui-shell-backdrop {
-  background:
-    linear-gradient(180deg, rgba(14, 16, 20, 0.97), rgba(8, 10, 14, 0.97)),
-    linear-gradient(110deg, rgba(255, 255, 255, 0.018), transparent 30%, rgba(15, 118, 110, 0.04) 54%, transparent 80%, rgba(255, 255, 255, 0.012));
-}
 
 .ui-workspace-shell-search .ui-page-panel {
   background:
@@ -653,15 +588,7 @@ body {
 }
 
 .ui-workspace-shell-study .ui-page-panel {
-  background:
-    linear-gradient(180deg, rgba(250, 251, 252, 0.9), rgba(242, 246, 249, 0.86)),
-    repeating-linear-gradient(
-      0deg,
-      rgba(17, 24, 39, 0.018) 0,
-      rgba(17, 24, 39, 0.018) 1px,
-      transparent 1px,
-      transparent 20px
-    );
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 248, 244, 0.82));
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 28px;
   box-shadow: 0 18px 48px rgba(17, 24, 39, 0.08);
@@ -716,8 +643,7 @@ body {
 }
 
 [data-theme="dark"] .ui-workspace-shell-search .ui-page-panel {
-  background:
-    linear-gradient(180deg, rgba(17, 21, 27, 0.9), rgba(14, 18, 24, 0.86));
+  background: color-mix(in srgb, var(--bg-1) 92%, transparent);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
 }
@@ -728,7 +654,7 @@ body {
 
 [data-theme="dark"] .ui-workspace-shell-search .ui-card,
 [data-theme="dark"] .ui-workspace-shell-search .ui-card-muted {
-  background: rgba(19, 24, 31, 0.72);
+  background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -737,19 +663,11 @@ body {
 }
 
 [data-theme="dark"] .ui-workspace-shell-search .workspace-selection-card {
-  background: rgba(16, 20, 26, 0.82);
+  background: color-mix(in srgb, var(--bg-1) 82%, transparent);
 }
 
 [data-theme="dark"] .ui-workspace-shell-study .ui-page-panel {
-  background:
-    linear-gradient(180deg, rgba(16, 20, 25, 0.92), rgba(12, 16, 21, 0.9)),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.02) 0,
-      rgba(255, 255, 255, 0.02) 1px,
-      transparent 1px,
-      transparent 20px
-    );
+  background: color-mix(in srgb, var(--bg-1) 92%, transparent);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.24);
 }
@@ -760,14 +678,14 @@ body {
 }
 
 [data-theme="dark"] .ui-workspace-shell-study .ui-subtitle {
-  color: rgba(219, 226, 234, 0.76);
+  color: var(--ink-secondary);
 }
 
 [data-theme="dark"] .ui-workspace-shell-study .ui-card,
 [data-theme="dark"] .ui-workspace-shell-study .ui-card-muted,
 [data-theme="dark"] .ui-workspace-shell-study .ui-stat-card,
 [data-theme="dark"] .ui-workspace-shell-study .root-list li {
-  background: rgba(19, 24, 31, 0.72);
+  background: color-mix(in srgb, var(--bg-2) 72%, transparent);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -1472,7 +1390,10 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  background: rgba(15, 118, 110, 0.12);
+  /* A neutral tile with the glyph in the accent. Tinted tiles (orange-500 on
+     dark, which read brown) were the old design's. */
+  background: color-mix(in srgb, var(--selection) 6%, transparent);
+  border: 1px solid var(--line);
   color: var(--accent);
   font-size: 1.05rem;
   font-weight: 600;
@@ -1593,20 +1514,21 @@ body {
   line-height: 1.4;
 }
 
-.ui-viz-switcher-option:hover {
-  background: rgba(255, 255, 255, 0.08);
+@media (hover: hover) {
+  .ui-viz-switcher-option:hover {
+    background: color-mix(in srgb, var(--selection) 6%, transparent);
+  }
 }
 
+/* The selected view: the quiet selection tint and hairline the rail and the
+   mobile bar use. A solid accent fill is for calls to action, not state. */
 .ui-viz-switcher-option.active {
-  background: var(--accent);
+  background: color-mix(in srgb, var(--selection) 9%, transparent);
+  border-color: color-mix(in srgb, var(--selection) 24%, transparent);
 }
 
 .ui-viz-switcher-option.active .ui-viz-switcher-label {
-  color: var(--accent-ink);
-}
-
-.ui-viz-switcher-option.active .ui-viz-switcher-desc {
-  color: color-mix(in srgb, var(--accent-ink) 75%, transparent);
+  color: var(--selection);
 }
 
 .ui-viz-switcher-helper {
@@ -2015,10 +1937,6 @@ body {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
-[data-theme="dark"] .ui-viz-switcher-icon {
-  background: rgba(249, 115, 22, 0.18);
-  color: var(--accent);
-}
 
 [data-theme="dark"] .ui-viz-switcher-dropdown {
   background: rgba(20, 30, 36, 0.92);
@@ -2060,8 +1978,10 @@ body {
   }
 }
 
+/* The background comes from --footer-glass-bg, near-opaque in both themes.
+   A half-transparent navy here (the old design's slate) let page content
+   show through the credit line on phones. */
 [data-theme='dark'] .site-footer {
-  background: rgba(10, 12, 20, 0.56);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
 }
@@ -2117,7 +2037,7 @@ button.site-footer-link {
 [data-theme='dark'] .site-footer-link:visited,
 [data-theme='dark'] a.site-footer-link,
 [data-theme='dark'] button.site-footer-link {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ink-secondary);
 }
 
 [data-theme='dark'] .site-footer-link:hover {
@@ -2381,11 +2301,9 @@ button.site-footer-link {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(circle at 15% 18%, rgba(15, 118, 110, 0.12), transparent 40%),
-    radial-gradient(circle at 84% 16%, rgba(245, 158, 11, 0.12), transparent 36%),
-    radial-gradient(circle, rgba(31, 28, 25, 0.1) 1px, transparent 1.7px) 0 0 / 36px 36px,
-    radial-gradient(circle, rgba(15, 118, 110, 0.06) 0.8px, transparent 1.5px) 18px 18px / 44px 44px;
+  /* A faint ink dot grid only. The teal and amber corner glows that sat over
+     it were the old design's (the rest went in the glow pass). */
+  background: radial-gradient(circle, rgba(31, 28, 25, 0.1) 1px, transparent 1.7px) 0 0 / 36px 36px;
   opacity: 0.34;
   mix-blend-mode: multiply;
   animation: drift-grid 28s linear infinite;
@@ -3048,74 +2966,14 @@ button.site-footer-link {
 
 .header-controls [data-tour-id="display-settings"],
 .header-controls .viz-export,
-.header-controls .sidebar-toggle-btn,
 .header-controls .header-button-group {
   flex: 0 0 auto;
-}
-
-.sidebar-toggle-btn {
-  background: transparent;
-  color: #f97316;
-  border: 2px solid #f97316;
-  padding: 0.45rem 1.1rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  min-width: 7.8rem;
-  text-align: center;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.sidebar-toggle-btn:hover {
-  background: rgba(249, 115, 22, 0.1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
-}
-
-.sidebar-toggle-btn.active {
-  background: #f97316;
-  color: #fff;
-}
-
-.sidebar-toggle-btn.active:hover {
-  background: #ea580c;
-  border-color: #ea580c;
-}
-
-.floating-sidebar {
-  position: fixed;
-  top: var(--header-clearance);
-  inset-inline-end: 1rem;
-  bottom: calc(var(--footer-height) + 0.5rem);
-  width: min(380px, 92vw);
-  z-index: 40;
-  transform: translateX(var(--sidebar-slide-out));
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
-  filter: drop-shadow(0 24px 48px rgba(15, 23, 42, 0.18));
-}
-
-.floating-sidebar.open {
-  transform: translateX(0);
-  pointer-events: auto;
 }
 
 /* Dark Mode Header adjustments */
 [data-theme='dark'] .header-dock {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: none;
-}
-
-[data-theme='dark'] .sidebar-toggle-btn {
-  color: #f97316;
-  border-color: #f97316;
-}
-
-[data-theme='dark'] .sidebar-toggle-btn:hover {
-  background: rgba(249, 115, 22, 0.15);
 }
 
 .lang-switcher {
@@ -4428,10 +4286,14 @@ button.site-footer-link {
   }
 }
 
-@media (max-width: 900px) {
+/* 980px, the shell's mobile breakpoint (VizControlContext MOBILE_QUERY): at
+   900px this left 901–980px with a phone's sheet state and a desktop panel. */
+@media (max-width: 980px) {
   .viz-sidebar-stack {
     top: var(--header-clearance);
     inset-inline-start: 1rem; /* No JourneyRail on mobile */
+    /* Over the intro chip (44), which otherwise sat on the sheet's first row. */
+    z-index: 46;
     bottom: calc(var(--footer-height) + var(--mobile-tools-bar-clearance) + var(--graph-toolbar-mobile-clearance));
     width: calc(100vw - 2rem);
     max-height: calc(100dvh - var(--header-clearance) - var(--footer-height) - var(--mobile-tools-bar-clearance) - var(--graph-toolbar-mobile-clearance));
@@ -6858,6 +6720,15 @@ button.site-footer-link {
   outline-offset: -2px;
 }
 
+/* A phone has no free canvas to float the chip over: it covered part of every
+   view. Its content is the Explain tab, one tap away on the labelled Details
+   button in the bottom bar. */
+@media (max-width: 640px) {
+  .viz-intro-chip {
+    display: none;
+  }
+}
+
 @keyframes viz-intro-chip-in {
   from {
     opacity: 0;
@@ -6867,27 +6738,13 @@ button.site-footer-link {
   }
 }
 
-@media (max-width: 980px) {
-  .viz-intro-chip {
-    /* Clear the mobile AppShell rail strip (top-center icon bar) so the
-       chip doesn't sit on top of its icons. */
-    top: calc(var(--header-clearance) + 108px);
-  }
-}
 
 /* Collocation graph's "Heuristic estimate" honesty badge
    (components/visualisations/CollocationNetworkGraph.tsx). Desktop offset
-   sits just under the intro chip's desktop row; on mobile the intro chip
-   itself moves down (see .viz-intro-chip above), so the badge has to move
-   further down too or the chip's pill hides it. */
+   sits just under the intro chip's row, the same on every width now that no
+   mobile rail strip pushes the chip down. */
 .collocation-heuristic-badge {
   top: calc(var(--header-clearance) + 102px);
-}
-
-@media (max-width: 980px) {
-  .collocation-heuristic-badge {
-    top: calc(var(--header-clearance) + 152px);
-  }
 }
 
 /* ============================================================================
@@ -7312,8 +7169,36 @@ button.site-footer-link {
   touch-action: none;
   outline: none;
 }
+.cr-stage[data-zoomed] { cursor: grab; }
 .cr-stage[data-hot] { cursor: pointer; }
 .cr-stage:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+/* What a pinch moves as one: the three canvases and the centre label. A
+   gesture sets its transform while fingers move; the drawing catches up once. */
+.cr-layers {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.cr-zoom-reset {
+  position: absolute;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill, 999px);
+  background: color-mix(in srgb, var(--bg-1) 92%, transparent);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+.cr-zoom-reset:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cr-layer {
   position: absolute;
   inset: 0;
@@ -7342,6 +7227,13 @@ button.site-footer-link {
 .cr-centre-gloss { margin-block-start: 2px !important; font-size: 10.5px; color: var(--ink-muted); }
 .cr-centre-meta { margin-block-start: 8px !important; font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 .cr-centre-meta b { color: var(--ink); font-weight: 600; }
+/* On a phone the label must fit the rings' inner hole, not spill over them. */
+@media (max-width: 700px) {
+  .cr-centre { max-inline-size: 9.5rem; padding: 8px 10px; }
+  .cr-centre-roots { font-size: 18px; }
+  .cr-centre-gloss { font-size: 9.5px; }
+  .cr-centre-meta { margin-block-start: 4px !important; font-size: 10px; }
+}
 
 /* ── Tooltip ──────────────────────────────────────────────────────────── */
 .cr-tip {
@@ -7646,12 +7538,15 @@ button.site-footer-link {
 }
 .cr-drawer-link:hover { color: var(--accent); }
 .cr-meetings { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-block-size: 46vh; overflow-y: auto; }
+/* A row is number · name · meeting ayahs on one line while they fit; a long
+   list of ayahs wraps onto its own line, end-aligned, rather than squeezing
+   the name (a grid's `auto` column took the width and ran the ayahs over it). */
 .cr-meetings button {
   inline-size: 100%;
-  display: grid;
-  grid-template-columns: 2rem 1fr auto;
-  align-items: center;
-  gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
   padding: 6px 8px;
   border: 0;
   border-radius: 8px;
@@ -7664,11 +7559,14 @@ button.site-footer-link {
 }
 .cr-meetings button:hover,
 .cr-meetings button:focus-visible { background: color-mix(in srgb, var(--accent) 10%, transparent); outline: none; }
-.cr-meetings-n { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-.cr-meetings-name { display: flex; align-items: baseline; gap: 6px; min-inline-size: 0; }
-.cr-meetings-name .cr-root { font-size: 15px; }
-.cr-meetings-en { color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cr-meetings-refs { color: var(--viz-meeting); font-variant-numeric: tabular-nums; }
+.cr-meetings-n { flex: 0 0 2rem; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.cr-meetings-name { display: flex; align-items: baseline; gap: 6px; min-inline-size: 0; max-inline-size: calc(100% - 2rem - 8px); }
+.cr-meetings-name .cr-root { flex: 0 0 auto; font-size: 15px; }
+.cr-meetings-en { min-inline-size: 0; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-meetings-refs { margin-inline-start: auto; text-align: end; color: var(--viz-meeting); font-variant-numeric: tabular-nums; }
+/* The ayah list is an LTR run, so its own `end` is the right; in an RTL row it
+   sits at the left, and its wrapped lines should too. */
+[dir="rtl"] .cr-meetings-refs { text-align: left; }
 
 @media (prefers-reduced-motion: reduce) {
   .cr-seg button, .cr-switch i, .cr-switch i::after, .cr-presets button { transition: none; }

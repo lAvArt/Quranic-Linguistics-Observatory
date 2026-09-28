@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
+- Zoom and touch for the Concordance Rings: pinch, scroll or double-tap to
+  zoom (to 8×), drag to pan, **Full view** to return, `+`/`−`/`0` from the
+  keyboard. On touch, a tap reads out an ayah and a second tap on the same ring
+  opens its card. Zooming in thickens the rings until every root's slot shows.
+- `docs/MOBILE-AUDIT.md`: a phone audit of every mode, menu and page, with
+  before/after measurements, and `scripts/audit/` to repeat them.
 - **Concordance Rings**, a tenth viz mode (`?viz=concordance-rings`): two or
   three roots across the whole Quran. Every surah is a ring and every ayah a
   tick, coloured where a chosen root occurs and cream where all of them meet in
@@ -33,6 +39,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   (89%) have none, covering 37.6% of all root-bearing words.
 
 ### Fixed
+
+- The full corpus now downloads once per device. The IndexedDB cache is
+  invalidated by version, not after seven days; Supabase pages load six at a
+  time; and the search index — which every search box rebuilt, three times per
+  page load, on the main thread — is built once, when a query needs it or in
+  idle time. On a phone-class CPU: first visit 153 s → 16–27 s, every later
+  visit 7.7 s → 2.9 s with no network.
+- Concordance Rings on phones: hover and taps redraw one canvas layer instead
+  of all three (37 → 54 fps scrubbing, 1.3 s → 0.2 s of blocked main thread);
+  the Controls sheet was empty; opening it pushed the rings off-centre (a
+  full-width sheet counted as a side column in every mode's fit); the intro chip
+  covered the 12 o'clock marker; the rings get a sixth more radius on a phone.
+- Phone menus: no sideways edge swipes (they opened a bottom sheet and fought the
+  browser's back gesture); "Hide info panel" no longer leaves the Legend button
+  opening an invisible sheet; the bottom bar names its sheets Controls and
+  Details; the Details sheet has a grip and a close button; one mobile breakpoint
+  (980px); no sticky hover after a tap.
+- Colours left from the old design: the glows behind the explore view and the
+  Sankey, Arc Flow's and the Freq mode's rainbow ramps, Knowledge graph's cyan and
+  green, the switcher's brown tiles, emoji and accent-filled selection, the light
+  theme's amber-500 and blue-700, the quiz cards' navy, the half-transparent navy
+  footer, and the Search, Study and Quiz pages' own grey-blue and sepia
+  "atmospheres" (Study was dark even in the light theme). All now use the
+  observatory palette.
+- The search page failed to hydrate (server and browser formatted counts in
+  different locales), and showed "Shell ready" jargon.
 
 - The canvas behind every page. Three fixed layers each painted accent radials on
   top of one another — the dark `body`, `.ui-shell-backdrop`, and the default

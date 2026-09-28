@@ -17,6 +17,16 @@ import { motionSafeDuration, motionSafeStagger, prefersReducedMotion } from "@/l
 import { SURAH_NAMES } from "@/lib/data/surahData";
 import { FULL_CORPUS_TOKEN_FLOOR } from "@/lib/corpus/corpusExpectations";
 
+/**
+ * Root arcs in the default colouring, rare → frequent: the data spectrum's
+ * violet, teal and amber (deepened for parchment in light). This was a
+ * magenta → violet → blue → cyan ramp blended with a rainbow, the old design's.
+ */
+const ROOT_ARC_RAMP: Record<"light" | "dark", string[]> = {
+  dark: ["#8e84cc", "#56a697", "#e8924a"],
+  light: ["#6d28d9", "#0f766e", "#b45309"],
+};
+
 interface ArcFlowDiagramProps {
   tokens: CorpusToken[];
   groupBy: "root" | "pos" | "ayah";
@@ -410,13 +420,7 @@ export default function ArcFlowDiagram({
       const barHeight = 34 + (data.count / maxGroupCount) * maxBarHeightForLayout;
       const frequencyRatio = Math.log1p(data.count) / Math.log1p(maxGroupCount || 1);
       const identityRatio = sortedGroups.length > 1 ? idx / (sortedGroups.length - 1) : 0.5;
-      const rootIdentityColor = d3.interpolateSinebow(0.08 + identityRatio * 0.84);
-      const rootFrequencyColor = d3.interpolateRgbBasis([
-        "#a21caf",
-        "#7c3aed",
-        "#2563eb",
-        "#06b6d4",
-      ])(frequencyRatio);
+      const rootFrequencyColor = d3.interpolateRgbBasis(ROOT_ARC_RAMP[theme])(frequencyRatio);
 
       const isContextMatch =
         data.matchCount > 0 ||
@@ -438,7 +442,7 @@ export default function ArcFlowDiagram({
               ? getFrequencyColor(frequencyRatio, theme)
               : lexicalColorMode === "identity"
                 ? getIdentityColor(key, theme)
-                : d3.interpolateRgb(rootFrequencyColor, rootIdentityColor)(0.4)
+                : rootFrequencyColor
             : d3.interpolateRgbBasis(GRADIENT_PALETTES.vibrant)(identityRatio),
         sampleToken: data.sampleToken,
         matchCount: data.matchCount,
@@ -952,7 +956,7 @@ export default function ArcFlowDiagram({
                   ? `linear-gradient(90deg, ${getFrequencyColor(0.05, theme)}, ${getFrequencyColor(0.45, theme)}, ${getFrequencyColor(0.95, theme)})`
                   : lexicalColorMode === "identity"
                     ? `linear-gradient(90deg, ${getIdentityColor("root-a", theme)}, ${getIdentityColor("root-b", theme)}, ${getIdentityColor("root-c", theme)})`
-                    : "linear-gradient(90deg, #a21caf, #7c3aed, #2563eb, #06b6d4)"
+                    : `linear-gradient(90deg, ${ROOT_ARC_RAMP[theme].join(", ")})`
                 : `linear-gradient(90deg, ${GRADIENT_PALETTES.vibrant.join(", ")})`,
             }}
           />

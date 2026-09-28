@@ -21,16 +21,18 @@ const VISUALIZATION_OPTIONS: Array<{
   mode: VisualizationMode;
   icon: string;
 }> = [
+    // Monochrome geometric glyphs, one per mode: no colour emoji (they came
+    // with the old design and ignored the theme), no two modes sharing one.
     { mode: "corpus-architecture", icon: "⬡" },
-    { mode: "surah-distribution", icon: "◎" },
+    { mode: "surah-distribution", icon: "∷" },
     { mode: "radial-sura", icon: "\u25C9" },
     { mode: "root-network", icon: "\u2B21" },
     { mode: "arc-flow", icon: "\u2312" },
     { mode: "dependency-tree", icon: "\u228F" },
     { mode: "sankey-flow", icon: "\u224B" },
-    { mode: "collocation-network", icon: "🕸️" },
+    { mode: "collocation-network", icon: "⊛" },
     { mode: "concordance-rings", icon: "◎" },
-    { mode: "knowledge-graph", icon: "🌱" },
+    { mode: "knowledge-graph", icon: "⁘" },
   ];
 
 function getIcon(mode: VisualizationMode): string {
