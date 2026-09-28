@@ -17,6 +17,7 @@ import {
 } from "@/lib/corpus/concordanceClient";
 import {
   TICK_FILL,
+  TICK_STRIDE,
   angleAt,
   buildTicks,
   frameFor,
@@ -623,6 +624,9 @@ export default function ConcordanceRings({ theme = "dark", highlightRoot, onRoot
       onKeyDown={onKeyDown}
       onBlur={() => setFocus(null)}
       data-hot={pointer ? "true" : undefined}
+      // Ticks handed to the renderer: a canvas mode's stand-in for counting SVG
+      // marks, which scripts/build-graph-images.ts waits on before a capture.
+      data-marks={ticks && rendererKind ? ticks.length / TICK_STRIDE : undefined}
     >
       <canvas ref={backRef} className="cr-layer" aria-hidden="true" />
       <canvas ref={tickRef} className="cr-layer" aria-hidden="true" />

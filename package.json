@@ -60,7 +60,8 @@
     "favicon:build": "tsx scripts/build-favicon.ts",
     "db:seed": "dotenv -e .env.local -- tsx scripts/seed-corpus.ts",
     "db:email-templates": "dotenv -e .env.local -- tsx scripts/push-email-templates.ts",
-    "docs:generate": "concurrently -k -s first \"npm run dev\" \"wait-on http://127.0.0.1:3000 && npx tsx scripts/generate-docs.ts\""
+    "docs:generate": "concurrently -k -s first \"npm run dev\" \"wait-on http://127.0.0.1:3000 && npx tsx scripts/generate-docs.ts\"",
+    "docs:record-rings": "tsx scripts/record-concordance.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.126.0",

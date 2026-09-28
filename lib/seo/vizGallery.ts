@@ -22,7 +22,8 @@
  * blank, because the count is its decorative starfield, not one node of the
  * graph. Do not re-admit a mode on a mark count alone.
  *
- *   radial-sura, sankey-flow, arc-flow, dependency-tree   -> in
+ *   radial-sura, sankey-flow, arc-flow, dependency-tree,
+ *   concordance-rings                                    -> in
  *   collocation-network   blank starfield; the PMI fetch returns nothing
  *                         inside an embed, exactly as before
  *   root-network          paints 4 of 18 nodes and bakes in the
@@ -74,6 +75,15 @@ export const VIZ_GALLERY: readonly VizGalleryEntry[] = [
         titleKey: "ArcFlow",
         embedQuery: "surah=2",
         liveQuery: "viz=arc-flow&surah=2",
+    },
+    {
+        // Draws from its own offline file, not the corpus API, so it captures
+        // fully in a headless embed. The spec's headline phrase, خلق السماوات
+        // والأرض: 39 surahs, 59 meetings.
+        mode: "concordance-rings",
+        titleKey: "ConcordanceRings",
+        embedQuery: `roots=${encodeURIComponent("خلق,سمو,ارض")}&view=stacked`,
+        liveQuery: `viz=concordance-rings&roots=${encodeURIComponent("خلق,سمو,ارض")}&view=stacked`,
     },
     {
         // One ayah's parse; Al-Fatihah 1:1 is short enough to read at 1200px.

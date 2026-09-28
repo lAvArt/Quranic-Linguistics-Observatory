@@ -31,6 +31,18 @@ Quranic Linguistics Observatory is a Next.js application for exploring the Quran
 
 ### Visual exploration
 
+<div align="center">
+<img width="760" height="760" alt="Concordance Rings in motion — خلق · سمو · ارض across the Quran: the rings sort by first meeting into a spiral, then turn so every meeting lines up at 12 o'clock" src="public/docs/images/concordance-rings/rings-in-motion.webp" />
+<br />
+<sub><b>Concordance Rings</b> — pick two or three roots and every surah becomes a ring, every ayah a tick:
+coloured where a root occurs, cream where all of them meet in one ayah. Here <code>خلق · سمو · ارض</code>
+(to create · sky · earth) meet 59 times across 39 surahs. Sorted by first meeting the meetings trace a spiral;
+aligned, the spiral becomes a column at 12 o'clock. Hovering a tick reads out its ayah with the roots' words
+coloured. Recorded frame by frame from the live app — <a href="docs/CONCORDANCE-RINGS.md">design notes</a>.</sub>
+</div>
+
+<br />
+
 <table>
 <tr>
 <td width="50%" valign="top">
@@ -95,10 +107,16 @@ Quranic Linguistics Observatory is a Next.js application for exploring the Quran
 <!-- END:GRAPH -->
 <div align="center"><sub><b>Ayah Dependency Graph</b> — syntactic dependencies within an ayah</sub></div>
 </td>
+<td width="50%" valign="top">
+<!-- GRAPH:CONCORDANCE_RINGS -->
+<img width="2560" height="1260" alt="Concordance Rings — خلق · سمو · ارض across all 114 surahs: every ayah a tick, every meeting in cream" src="public/docs/images/concordance-rings.png" />
+<!-- END:GRAPH -->
+<div align="center"><sub><b>Concordance Rings</b> — two or three roots across all 114 surahs, and the ayahs where they meet</sub></div>
+</td>
 </tr>
 </table>
 
-- Radial Surah Map, Root Network, Collocation Network, Knowledge Graph, Surah Distribution, Arc Flow, Ayah Dependency Graph, Root Flow Sankey, and Corpus Architecture views
+- Concordance Rings, Radial Surah Map, Root Network, Collocation Network, Knowledge Graph, Surah Distribution, Arc Flow, Ayah Dependency Graph, Root Flow Sankey, and Corpus Architecture views
 - Shared inspectors, breadcrumbs, explainer content, export options, and embed support
 - Shell-ready and deep-data-ready loading states so the app remains usable before the full corpus finishes loading
 
@@ -258,6 +276,7 @@ tab so the search you were running is not lost.
 | `npm run i18n:check` | Check translation coverage |
 | `npm run i18n:pseudo` | Regenerate pseudo-localized messages |
 | `npm run docs:generate` | Regenerate screenshot-backed docs assets |
+| `npm run docs:record-rings` | Re-record the Concordance Rings animation (dev server running) |
 | `npm run data:root-dist` | Rebuild `/frequency` data and the gloss-gap worklist |
 
 ## Tech Stack
@@ -326,6 +345,8 @@ docs/                Product, schema, roadmap, and release documentation
 - [docs/EMBEDDING.md](docs/EMBEDDING.md)
 - [docs/ROADMAP.md](docs/ROADMAP.md)
 - [docs/VIZ_ARCHITECTURE.md](docs/VIZ_ARCHITECTURE.md)
+- [docs/CONCORDANCE-RINGS.md](docs/CONCORDANCE-RINGS.md) — the Concordance Rings mode:
+  spec, figures, motion and rendering notes
 - [docs/ROOT-GLOSS-GAPS.md](docs/ROOT-GLOSS-GAPS.md) — generated worklist of roots
   still missing an English gloss, ranked by share of the text (`npm run data:root-dist`)
 

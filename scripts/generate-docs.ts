@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { EXPERIENCE_VERSION } from '../lib/config/version';
 
 const BASE = 'http://localhost:3000';
 
@@ -15,6 +16,15 @@ const HERO_TARGET = {
 };
 
 const VIZ_TARGETS = [
+    {
+        id: 'CONCORDANCE_RINGS',
+        vizMode: 'concordance-rings',
+        switcherLabel: 'Concordance Rings',
+        filename: 'concordance-rings.png',
+        alt: 'Concordance Rings — خلق · سمو · ارض across all 114 surahs: every ayah a tick, every meeting in cream',
+        // The spec's headline phrase, خلق السماوات والأرض: 39 surahs, 59 meetings.
+        extraParams: '&roots=%D8%AE%D9%84%D9%82%2C%D8%B3%D9%85%D9%88%2C%D8%A7%D8%B1%D8%B6&view=stacked'
+    },
     {
         id: 'COLLOCATION_NETWORK',
         vizMode: 'collocation-network',
@@ -99,14 +109,16 @@ async function generateDocumentationScreenshots() {
     await page.goto(`${BASE}/en`);
 
     // 2. Set LocalStorage State for onboarding to be completed
-    await page.evaluate(() => {
+    await page.evaluate((version) => {
         localStorage.setItem('quran-corpus-viz-state', JSON.stringify({
             vizMode: 'radial-sura',
             theme: 'dark',
             selectedSurahId: 1
         }));
+        // The version must match the app's, or onboarding treats the stored
+        // state as stale and the first-run modal covers every screenshot.
         localStorage.setItem('quran-corpus-onboarding', JSON.stringify({
-            version: "2",
+            version,
             showOnStartup: false,
             completed: true
         }));
@@ -116,8 +128,9 @@ async function generateDocumentationScreenshots() {
             'corpus-architecture': true, 'surah-distribution': true, 'radial-sura': true,
             'root-network': true, 'arc-flow': true, 'dependency-tree': true,
             'sankey-flow': true, 'collocation-network': true, 'knowledge-graph': true,
+            'concordance-rings': true,
         }));
-    });
+    }, EXPERIENCE_VERSION);
 
     // 3. HERO — capture the search-first landing in its resting state.
     console.log('Capturing home landing (hero)...');

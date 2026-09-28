@@ -34,6 +34,7 @@ const RootFlowSankey = load(() => import("@/components/visualisations/RootFlowSa
 const CorpusArchitectureMap = load(() => import("@/components/visualisations/CorpusArchitectureMap"));
 const KnowledgeGraphViz = load(() => import("@/components/visualisations/KnowledgeGraphViz"));
 const CollocationNetworkGraph = load(() => import("@/components/visualisations/CollocationNetworkGraph"));
+const ConcordanceRings = load(() => import("@/components/visualisations/ConcordanceRings"));
 
 /* ------------------------------------------------------------------ */
 /* postMessage protocol                                                */
@@ -76,8 +77,15 @@ export default function EmbedClient({ vizMode, initialRoot, initialSurah, initia
 
   /* ---- data loading ------------------------------------------------ */
   const needsFullCorpus = vizMode === "surah-distribution" || vizMode === "corpus-architecture" || vizMode === "knowledge-graph";
+  // Concordance rings bring their own data (public/data/concordance.json) and
+  // read no corpus tokens, so they neither wait for nor trigger a corpus load.
+  const ownData = vizMode === "concordance-rings";
 
   useEffect(() => {
+    if (ownData) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     const loader = needsFullCorpus
       ? loadFullCorpus()
@@ -92,7 +100,7 @@ export default function EmbedClient({ vizMode, initialRoot, initialSurah, initia
       if (!cancelled) setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [needsFullCorpus, selectedSurahId]);
+  }, [needsFullCorpus, ownData, selectedSurahId]);
 
   const flows = useMemo(() => buildRootWordFlows(allTokens), [allTokens]);
   const roots = useMemo(() => uniqueRoots(allTokens), [allTokens]);
@@ -126,6 +134,14 @@ export default function EmbedClient({ vizMode, initialRoot, initialSurah, initia
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
+  /* ---- theme ------------------------------------------------------- */
+  // <html> carries the visitor's site theme (dark by default), and the light
+  // tokens live on :root, so a data-theme on the wrapper alone left a light
+  // embed half dark. The embed is its own document: its theme is the page's.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
   /* ---- postMessage: outbound ready --------------------------------- */
   useEffect(() => {
     if (!loading && window.parent !== window) {
@@ -135,6 +151,9 @@ export default function EmbedClient({ vizMode, initialRoot, initialSurah, initia
 
   /* ---- render visualization ---------------------------------------- */
   const vizContent = useMemo(() => {
+    if (vizMode === "concordance-rings") {
+      return <ConcordanceRings theme={theme} highlightRoot={selectedRoot} />;
+    }
     if (allTokens.length === 0) return null;
     switch (vizMode) {
       case "radial-sura":

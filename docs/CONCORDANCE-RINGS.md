@@ -1,6 +1,12 @@
 # Concordance Rings
 
-A proposed visualisation for the observatory: where two or three roots occur across the whole Quran, and where they occur together. It extends the ring language of `radial-sura` from one surah to many. Every surah becomes a ring, every ayah a tick on it, and the ticks light up where the chosen roots appear.
+A visualisation for the observatory: where two or three roots occur across the whole Quran, and where they occur together. It extends the ring language of `radial-sura` from one surah to many. Every surah becomes a ring, every ayah a tick on it, and the ticks light up where the chosen roots appear.
+
+<p align="center">
+  <img width="760" height="760" alt="The rings in motion for خلق · سمو · ارض: at rest in mushaf order, then sorted by first meeting so the meetings trace a spiral, then turned so every first meeting lines up at 12 o'clock, then a hover on a meeting with its ayah" src="../public/docs/images/concordance-rings/rings-in-motion.webp" />
+</p>
+
+_The app, recorded frame by frame: rest → sort by first meeting (travel) → align at first meeting (turn) → hover. `npm run docs:record-rings` re-records it against a running dev server; see [Implementation notes](#implementation-notes)._
 
 _Status: built as viz mode `concordance-rings`. Written 2026-09-28._
 
@@ -39,7 +45,7 @@ The **Roots meet in** switch sets which surahs qualify. With **one ayah**, a sur
 
 ## Motion: sorting and aligning
 
-The rings move in two ways. They **turn**, which is aligning: a ring's angle changes. They **travel**, which is sorting: a ring's radius changes. Both animate between two states the reader could also jump between, so the motion shows _what changed_ rather than decorating it. Turning is prototyped and measured; travelling is specified here but not yet prototyped.
+The rings move in two ways. They **turn**, which is aligning: a ring's angle changes. They **travel**, which is sorting: a ring's radius changes. Both animate between two states the reader could also jump between, so the motion shows _what changed_ rather than decorating it. Both are built as described below.
 
 ![Four frames of the align motion, left to right: at rest, turning at 0.7 s, settling at 1.5 s, and aligned at 3.3 s with the meetings stacked into one column at 12 o'clock](../public/docs/images/concordance-rings/06-align-sequence.png)
 
@@ -78,8 +84,8 @@ The rings move in two ways. They **turn**, which is aligning: a ring's angle cha
 ### Implementation notes
 
 - **Turning is cheap.** Each ring's rotation is one number per frame, written into the same buffer as its opacity, and the tick geometry is never rebuilt. The prototype turns all 114 rings at 60 fps at 2× density (see the table under Rendering).
-- **Travelling should be just as cheap.** The prototype bakes each tick's radii into its geometry. For sorting, move each ring's base radius and thickness into that per-ring buffer too, so a sort updates two numbers per ring per frame instead of rebuilding thousands of ticks.
-- **Time comes only from the animation clock** (`requestAnimationFrame` timestamps and `performance.now`). A virtual clock can therefore step the motion frame by frame for tests and recordings; that is how the filmstrip above was made.
+- **Travelling is just as cheap.** The prototype baked each tick's radii into its geometry; the app instead keeps each ring's radius and thickness in the same per-ring texture as its rotation and opacity (2 × 128 texels), and each tick stores only its radial slot as a fraction of the ring. A sort updates four numbers per ring per frame and never rebuilds a tick.
+- **Time comes only from the animation clock** (`requestAnimationFrame` timestamps and `performance.now`). A virtual clock can therefore step the motion frame by frame for tests and recordings. That is how the filmstrip above was made, and the recording at the top: `scripts/record-concordance.ts` installs Playwright's clock, advances it exactly 1/25 s before each screenshot, and joins the frames into an animated WebP, so the result is smooth however slowly the machine renders. It launches Chromium with `--use-angle=d3d11` (see [Measure on the GPU](#rendering-and-performance)).
 
 ## Interactions
 
@@ -132,10 +138,11 @@ Measured with Playwright under GPU rasterisation at 2× density:
 
 **Measure on the GPU.** Headless Chromium on Windows renders WebGL through SwiftShader, a software GPU, unless it is launched with `--use-angle=d3d11`. Under SwiftShader a full-screen clear alone manages 35 fps, and this mode turns at about 15 fps. Those numbers describe the emulator, not the code. Also, `failIfMajorPerformanceCaveat` did not reject SwiftShader through ANGLE's Vulkan backend, so the fallback rule above does not fire on such machines: they get software WebGL, not the 2D path.
 
-## Proposed integration
+## Integration
 
-- **Mode.** A tenth viz mode, `concordance-rings`. It is listed with the root views (root network, root flow, collocation) rather than with `radial-sura`, because it follows roots across the corpus rather than studying one surah. Deep link: `/{locale}?viz=concordance-rings&roots=خلق,سمو,ارض&view=stacked`, where root params are plain-alif corpus keys, as elsewhere.
-- **Data.** An offline build script (proposed: `scripts/build-concordance.ts`) emitting the per-ayah root indices to `public/data/`, loaded lazily when the mode opens. Ayah text comes from the existing text source.
+- **Mode.** A tenth viz mode, `concordance-rings`. It is listed with the root views (root network, root flow, collocation) rather than with `radial-sura`, because it follows roots across the corpus rather than studying one surah. Deep link: `/{locale}?viz=concordance-rings&roots=خلق,سمو,ارض&view=stacked`, where root params are plain-alif corpus keys, as elsewhere. The link also carries `meet` and `order` when they differ from the defaults.
+- **Data.** `scripts/build-concordance.ts` emits the per-ayah root indices to `public/data/`, loaded lazily when the mode opens. Ayah text is built by the same script, not taken from the app's text source (see _Ayah text_ under Open questions).
+- **Embeds and the graph gallery.** `/embed/concordance-rings` renders the mode on its own, with the same `roots` and `view` parameters, and the mode has an entry in the indexable graph gallery (`lib/seo/vizGallery.ts`), whose still is built by `npm run graphs:build`. The mode loads its own data, so neither waits for the corpus tokens.
 - **Shell.** Controls render into the sidebar portal. The selected-ring card, and the list of meetings when no ring is selected, render into the details panel through `#viz-context-portal`, a slot added to the context drawer for this. Root colours are the theme-stable `--viz-root-1..3` and `--viz-meeting` tokens: three roots need three categorical colours, and `--viz-cat-*` has two. The rings fit the part of the stage the shell's chrome leaves visible (`getVisibleArea` in `lib/viz/fitToView.ts`). Toggles are custom switches, not native checkboxes.
 - **Accessibility.** Keyboard steps between rings and ticks. A text alternative lists the meeting ayahs as a table. With `prefers-reduced-motion`, the rings align without animating.
 - **Mobile.** Below about 700 px rings get too thin to read, so open in the overlaid view or cap the ring count.
