@@ -16,7 +16,29 @@ const COMMON_SUFFIXES = [
   "ي",
 ];
 
+/**
+ * Memo for the two pure functions below. Building the search indexes calls them
+ * several times per token — hundreds of thousands of calls over ~20k distinct
+ * strings — and without it normalisation alone was most of a page load on a
+ * phone (profiled: 12 s of a 25 s index build at 4× CPU throttle). Cleared, not
+ * evicted, when it fills, which only an unusual burst of distinct queries does.
+ */
+const MEMO_LIMIT = 60_000;
+const normalizedMemo = new Map<string, string>();
+const variantsMemo = new Map<string, readonly string[]>();
+
+function remember<V>(memo: Map<string, V>, key: string, value: V): V {
+  if (memo.size >= MEMO_LIMIT) memo.clear();
+  memo.set(key, value);
+  return value;
+}
+
 export function normalizeArabicForSearch(value: string): string {
+  const hit = normalizedMemo.get(value);
+  return hit !== undefined ? hit : remember(normalizedMemo, value, normalizeUncached(value));
+}
+
+function normalizeUncached(value: string): string {
   return value
     .trim()
     .normalize("NFKD")
@@ -65,8 +87,14 @@ export function foldHamza(value: string): string {
  * hamza-dropped fold (foldHamza) of each — so a query reaches a key written
  * with a different-but-equivalent hamza spelling (قران/قرآن/قرأن ↔ قرءان).
  * Deduped, order-preserving; callers try these DIRECT before any rasm fold.
+ * Memoised: the returned array is shared, so callers must only read it.
  */
-export function searchKeyVariants(query: string): string[] {
+export function searchKeyVariants(query: string): readonly string[] {
+  const hit = variantsMemo.get(query);
+  return hit ?? remember(variantsMemo, query, variantsUncached(query));
+}
+
+function variantsUncached(query: string): string[] {
   const base = normalizeArabicForSearch(query);
   const bridged = normalizeArabicForSearch(foldMaddaToHamzaAlef(query));
   const out: string[] = [];

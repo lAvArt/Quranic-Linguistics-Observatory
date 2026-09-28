@@ -63,29 +63,10 @@
   z-index: -1;
 }
 
+/* Flat in dark: the amber, teal and violet corner glows and the pulsing
+   layer that used to sit here were the old design's. */
 [data-theme="dark"] .neural-bg {
-  background:
-    radial-gradient(circle at 15% 25%, rgba(232, 146, 74, 0.1), transparent 38%),
-    radial-gradient(circle at 85% 18%, rgba(86, 166, 151, 0.1), transparent 38%),
-    radial-gradient(circle at 50% 82%, rgba(142, 132, 204, 0.07), transparent 42%);
-}
-
-/* Animated background glow */
-[data-theme="dark"] .neural-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.02),
-    transparent 70%
-  );
-  animation: pulse-glow 8s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+  background: none;
 }
 
 /* ============================================================================

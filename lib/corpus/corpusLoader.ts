@@ -10,7 +10,6 @@ import {
     corpusCache,
     CORPUS_METADATA_KEY,
     PARTIAL_CORPUS_METADATA_KEY,
-    QURAN_COM_CACHE_TTL_MS,
     type CacheMetadata,
 } from '@/lib/cache/corpusCache';
 import { FULL_CORPUS_TOKEN_FLOOR } from '@/lib/corpus/corpusExpectations';
@@ -90,21 +89,17 @@ function metadataHasCurrentMorphology(metadata: CacheMetadata | null): boolean {
     return Boolean(metadata?.hasMorphology) && metadata?.morphologyVersion === MORPHOLOGY_CACHE_VERSION;
 }
 
+/**
+ * The cache is invalidated by VERSION only — `CORPUS_CACHE_POLICY_VERSION` and
+ * `MORPHOLOGY_CACHE_VERSION` — never by age. The corpus is a fixed text, so a
+ * visitor downloads it once and keeps it until the data or its shape changes,
+ * or they clear site data. (It used to expire after seven days, which made
+ * every returning phone re-download ~77k tokens in 79 requests.)
+ */
 async function ensureQuranComCachePolicy(): Promise<void> {
     if (!cachePolicyInFlight) {
         cachePolicyInFlight = (async () => {
             await corpusCache.ensureCachePolicyVersion();
-            // The token store is described by either the full-corpus metadata or
-            // the partial (per-surah) metadata; expire on the freshest of the two
-            // so a partial-only cache isn't wiped on every policy check.
-            const fullMetadata = await corpusCache.getMetadata(CORPUS_METADATA_KEY);
-            const partialMetadata = await corpusCache.getMetadata(PARTIAL_CORPUS_METADATA_KEY);
-            const freshest = [fullMetadata, partialMetadata]
-                .filter((meta): meta is CacheMetadata => meta !== null)
-                .sort((a, b) => (b.lastUpdated ?? 0) - (a.lastUpdated ?? 0))[0] ?? null;
-            if (corpusCache.isMetadataExpired(freshest, QURAN_COM_CACHE_TTL_MS)) {
-                await corpusCache.clearCorpusData();
-            }
         })().catch((error) => {
             cachePolicyInFlight = null;
             throw error;
@@ -264,9 +259,37 @@ async function enrichTokensWithMorphology(
 let _memoryTokens: CorpusToken[] | null = null;
 let _activeLoad: Promise<CorpusToken[]> | null = null;
 
+/**
+ * Write a freshly fetched full corpus to IndexedDB without holding the view
+ * back until the write commits. The transaction is ISSUED at once, though, not
+ * in idle time or in chunks: a reload lets an issued transaction finish, but
+ * drops a write that hasn't started — measured, deferring it by even ~1.5 s
+ * (or chunking it) left no cache when the reader reloaded straight after a
+ * first visit, so the corpus downloaded again. Issuing costs one main-thread
+ * pass over the tokens, once per device. The metadata that vouches for the
+ * cache is written only after the tokens are stored, so a tab closed mid-write
+ * leaves an unvouched cache that the next visit ignores and refetches, never a
+ * partial one it trusts.
+ */
+function persistFullCorpus(tokens: CorpusToken[]): void {
+    void (async () => {
+        try {
+            await corpusCache.storeTokens(tokens);
+            await corpusCache.setMetadata(CORPUS_METADATA_KEY, {
+                tokenCount: tokens.length,
+                hasMorphology: true,
+                morphologyVersion: MORPHOLOGY_CACHE_VERSION,
+            });
+        } catch (err) {
+            console.warn('[CorpusLoader] Caching the corpus failed; the next visit will fetch it again.', err);
+        }
+    })();
+}
+
 // ── Supabase-backed corpus loader ─────────────────────────────────────────────
 
 const SUPABASE_PAGE_SIZE = 1000; // rows per query
+const SUPABASE_CONCURRENCY = 6; // pages in flight at once
 
 /**
  * Fetch all corpus tokens from Supabase `corpus_tokens` table.
@@ -316,14 +339,42 @@ async function loadCorpusFromSupabase(
         let highestCompletedSura = 0;
         let completeIndex = 0;
 
-        while (from < count) {
-            const { data, error } = await supabase
+        // Pages are fetched SUPABASE_CONCURRENCY at a time but consumed strictly
+        // in order, so everything below still sees rows ascending by (sura,
+        // ayah, position). One page after another took ~47 s on a phone-class
+        // CPU for the 79 pages of a full corpus; latency, not bandwidth, was
+        // the cost.
+        const fetchPage = (start: number) =>
+            supabase
                 .from('corpus_tokens')
                 .select('id, sura, ayah, position, text, root, lemma, pos, morphology')
                 .order('sura')
                 .order('ayah')
                 .order('position')
-                .range(from, from + SUPABASE_PAGE_SIZE - 1);
+                .range(start, start + SUPABASE_PAGE_SIZE - 1);
+        const pageStarts: number[] = [];
+        for (let start = 0; start < count; start += SUPABASE_PAGE_SIZE) pageStarts.push(start);
+        type Page = Awaited<ReturnType<typeof fetchPage>>;
+        const inFlight = new Map<number, Promise<Page>>();
+        let nextPage = 0;
+        const fillWindow = () => {
+            while (nextPage < pageStarts.length && inFlight.size < SUPABASE_CONCURRENCY) {
+                // The query builder is lazy — it sends nothing until awaited —
+                // so wrap it to start the request now. The no-op catch keeps a
+                // page left in flight by an early exit from surfacing as an
+                // unhandled rejection; the await below still sees the error.
+                const request = Promise.resolve(fetchPage(pageStarts[nextPage]));
+                request.catch(() => {});
+                inFlight.set(nextPage, request);
+                nextPage++;
+            }
+        };
+        fillWindow();
+
+        for (let page = 0; page < pageStarts.length; page++) {
+            const { data, error } = await inFlight.get(page)!;
+            inFlight.delete(page);
+            fillWindow();
 
             if (error) throw error;
             if (!data || data.length === 0) break;
@@ -350,7 +401,7 @@ async function loadCorpusFromSupabase(
             from += data.length;
             onProgress?.({ currentSura: allTokens[allTokens.length - 1]?.sura ?? 0, totalSuras: 114, currentTokens: allTokens.length, totalTokens: count, status: 'loading', message: `Loaded ${allTokens.length.toLocaleString()} / ${count.toLocaleString()} tokens from Supabase…` });
 
-            const isFinalPage = from >= count;
+            const isFinalPage = page === pageStarts.length - 1 || from >= count;
             const highestSuraSeen = allTokens[allTokens.length - 1]?.sura ?? highestCompletedSura;
             const completeThrough = isFinalPage ? highestSuraSeen : highestSuraSeen - 1;
             if (completeThrough > highestCompletedSura) {
@@ -516,13 +567,8 @@ async function _doLoadFullCorpus(
             // Fill any missing roots/morphology from the authoritative QAC file so
             // EVERY surah (not just Al-Fatihah) renders POS-coloured bars + arcs.
             const enrichedTokens = await enrichTokensWithMorphology(supabaseTokens, onProgress);
-            // Cache in IndexedDB so future loads never hit the network
-            await corpusCache.storeTokens(enrichedTokens);
-            await corpusCache.setMetadata(CORPUS_METADATA_KEY, {
-                tokenCount: enrichedTokens.length,
-                hasMorphology: true,
-                morphologyVersion: MORPHOLOGY_CACHE_VERSION,
-            });
+            // Cache in IndexedDB so future loads never hit the network.
+            persistFullCorpus(enrichedTokens);
             progress.status = 'complete';
             progress.totalTokens = enrichedTokens.length;
             progress.currentTokens = enrichedTokens.length;

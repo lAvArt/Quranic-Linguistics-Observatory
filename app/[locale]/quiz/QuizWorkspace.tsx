@@ -260,7 +260,7 @@ export default function QuizWorkspace({ initialCorpusData }: QuizWorkspaceProps)
           line-height: 1.5;
         }
         :global([data-theme="dark"] .quiz-experimental-badge) {
-          color: rgba(248, 250, 252, 0.94);
+          color: var(--ink);
           background: rgba(245, 158, 11, 0.14);
           border-color: rgba(245, 158, 11, 0.32);
         }
@@ -268,7 +268,7 @@ export default function QuizWorkspace({ initialCorpusData }: QuizWorkspaceProps)
           border-bottom-color: rgba(255, 255, 255, 0.08);
         }
         :global([data-theme="dark"] .quiz-section-badge) {
-          color: rgba(248, 250, 252, 0.96);
+          color: var(--ink);
         }
         :global([data-theme="dark"] .quiz-pending) {
           background: rgba(255, 255, 255, 0.03);

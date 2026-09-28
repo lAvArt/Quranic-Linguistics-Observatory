@@ -96,19 +96,21 @@ export default function KnowledgeGraphViz({
     const palette = useMemo(() => {
         const isDark = theme === "dark";
         return {
-            learningNode: isDark ? "#22d3ee" : "#0891b2",     // cyan
-            learningGlow: isDark ? "rgba(34,211,238,0.5)" : "rgba(8,145,178,0.4)",
-            learnedNode: isDark ? "#4ade80" : "#16a34a",      // green
-            learnedGlow: isDark ? "rgba(74,222,128,0.5)" : "rgba(22,163,74,0.4)",
+            // Learning = violet, learned = teal: the data spectrum's, and clear
+            // of the amber lemma nodes. (Stock cyan and green before.)
+            learningNode: isDark ? "#8e84cc" : "#6d28d9",
+            learningGlow: isDark ? "rgba(142,132,204,0.5)" : "rgba(109,40,217,0.35)",
+            learnedNode: isDark ? "#56a697" : "#0f766e",
+            learnedGlow: isDark ? "rgba(86,166,151,0.5)" : "rgba(15,118,110,0.35)",
             ghostNode: "rgba(28,42,49,0.7)",
             ghostStroke: "var(--line)",
             lemmaNode: themeColors.accent,
-            linkLearning: isDark ? "rgba(34,211,238,0.25)" : "rgba(8,145,178,0.18)",
-            linkLearned: isDark ? "rgba(74,222,128,0.25)" : "rgba(22,163,74,0.18)",
+            linkLearning: isDark ? "rgba(142,132,204,0.25)" : "rgba(109,40,217,0.16)",
+            linkLearned: isDark ? "rgba(86,166,151,0.25)" : "rgba(15,118,110,0.18)",
             linkGhost: "var(--line)",
             coreGlow: isDark
-                ? "radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)"
-                : "radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)",
+                ? "radial-gradient(circle, rgba(142,132,204,0.12) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(109,40,217,0.06) 0%, transparent 70%)",
         };
     }, [theme, themeColors.accent]);
 

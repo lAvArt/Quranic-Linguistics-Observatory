@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSearchCatalog, groupSearchResults, searchCorpus } from "@/lib/search/searchService";
+import { buildSearchCatalog, getSearchCatalog, groupSearchResults, hasSearchCatalog, searchCorpus } from "@/lib/search/searchService";
 import type { CorpusToken } from "@/lib/schema/types";
 
 const TOKENS: CorpusToken[] = [
@@ -54,5 +54,22 @@ describe("searchService", () => {
     const groups = groupSearchResults(results);
     expect(groups[0]?.kind).toBeDefined();
     expect(groups.flatMap((group) => group.items).length).toBe(results.length);
+  });
+});
+
+describe("shared search catalog", () => {
+  it("builds one catalog per token array, shared by every caller", () => {
+    const tokens = [...TOKENS];
+    expect(hasSearchCatalog(tokens)).toBe(false);
+    const a = getSearchCatalog(tokens);
+    expect(hasSearchCatalog(tokens)).toBe(true);
+    expect(getSearchCatalog(tokens)).toBe(a);
+    // A new array (the next corpus batch) is a new catalog, never a stale one.
+    expect(getSearchCatalog([...tokens])).not.toBe(a);
+  });
+
+  it("searches the same through the shared catalog as through a fresh one", () => {
+    const tokens = [...TOKENS];
+    expect(searchCorpus(tokens, getSearchCatalog(tokens), "حمد")).toEqual(searchCorpus(tokens, buildSearchCatalog(tokens), "حمد"));
   });
 });

@@ -11,6 +11,7 @@
  * Output files: <out>/<route-slug>--<viewport>--<theme>.png
  */
 import { chromium, type BrowserContext } from '@playwright/test';
+import { EXPERIENCE_VERSION } from '../lib/config/version';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -49,16 +50,18 @@ async function prepareContext(context: BrowserContext, theme: 'light' | 'dark'):
     await context.addCookies([
         { name: 'quran-corpus-theme', value: themeCookieValue(theme), url: BASE },
     ]);
-    await context.addInitScript((t) => {
+    // The onboarding version must be the current one (EXPERIENCE_VERSION), or
+    // the first-run modal treats the seed as stale and covers every shot.
+    await context.addInitScript(([t, version]) => {
         window.localStorage.setItem(
             'quran-corpus-onboarding',
-            JSON.stringify({ version: '2', showOnStartup: false, completed: true })
+            JSON.stringify({ version, showOnStartup: false, completed: true })
         );
         window.localStorage.setItem(
             'quran-corpus-viz-state',
             JSON.stringify({ theme: t, colorThemeId: 'teal-amber' })
         );
-    }, theme);
+    }, [theme, EXPERIENCE_VERSION] as const);
 }
 
 async function launchBrowser() {

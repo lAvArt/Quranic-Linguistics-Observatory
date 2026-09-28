@@ -5,14 +5,19 @@ import type { CorpusToken, PartOfSpeech } from "@/lib/schema/types";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { trackPerformanceMetric, type SearchMatchType } from "@/lib/analytics/events";
 import {
-  buildSearchCatalog,
+  getSearchCatalog,
   groupSearchResults,
+  hasSearchCatalog,
   searchCorpus,
   detectQueryIntent,
   type QueryIntent,
 } from "@/lib/search/searchService";
 import type { SearchResultItem } from "@/lib/search/searchTypes";
 import { fetchConceptExpansion } from "@/lib/search/conceptClient";
+import { FULL_CORPUS_TOKEN_FLOOR } from "@/lib/corpus/corpusExpectations";
+
+/** Let the page settle after the corpus lands before warming the search index. */
+const WARM_DELAY_MS = 3000;
 
 // ---------------------------------------------------------------------------
 // Options
@@ -154,11 +159,30 @@ export function useSearch({
 
   // ---- search (structured exact + BM25F lexical lane, fused with concept lane) ----
   const hasActiveFilters = !!(filterRoot || filterLemma || filterPos || filterAyah);
-  const catalog = useMemo(() => buildSearchCatalog(tokens), [tokens]);
+  // The catalog is built on demand — searchCorpus ignores queries under two
+  // characters, so nothing needs it until then — and shared across surfaces.
+  const wantsCatalog = debouncedEffectiveQuery.trim().length >= 2;
+  const catalog = useMemo(() => (wantsCatalog ? getSearchCatalog(tokens) : null), [wantsCatalog, tokens]);
   const results = useMemo<SearchResultItem[]>(
-    () => searchCorpus(tokens, catalog, debouncedEffectiveQuery, conceptTerms),
+    () => (catalog ? searchCorpus(tokens, catalog, debouncedEffectiveQuery, conceptTerms) : []),
     [catalog, debouncedEffectiveQuery, conceptTerms, tokens],
   );
+
+  // Warm it while the page is idle once the whole corpus is in, so the first
+  // query doesn't pay for the build. Streaming batches never trigger this.
+  useEffect(() => {
+    if (tokens.length < FULL_CORPUS_TOKEN_FLOOR || hasSearchCatalog(tokens)) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout;
+    let idleId = 0;
+    const timer = window.setTimeout(() => {
+      idleId = idle(() => getSearchCatalog(tokens), { timeout: 10_000 }) as number;
+    }, WARM_DELAY_MS);
+    return () => {
+      window.clearTimeout(timer);
+      if (idleId) cancelIdle(idleId);
+    };
+  }, [tokens]);
   const groupedResults = useMemo(() => groupSearchResults(results), [results]);
 
   // ---- result selection (pure — returns payload, consumer fires callbacks) ----

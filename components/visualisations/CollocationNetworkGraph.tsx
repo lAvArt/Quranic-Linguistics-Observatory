@@ -81,7 +81,8 @@ interface LemmaBloomItem {
     color: string;
 }
 
-const FALLBACK_NEON_PALETTE = ["#66F8FF", "#92A7FF", "#D493FF", "#76FFC7", "#FFD39D", "#7CC2FF"];
+// The data spectrum (lib/schema/visualizationTypes.ts), not the old neon set.
+const FALLBACK_NEON_PALETTE = ["#e8924a", "#56a697", "#8e84cc", "#9fd4c4", "#e6c24e", "#dd6a47"];
 const POS_OPTIONS: Array<PartOfSpeech> = ["N", "V", "P", "ADJ", "PRON"];
 const ARABIC_DIACRITICS_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 const TATWEEL_REGEX = /\u0640/g;
@@ -210,8 +211,8 @@ function pickSeededExampleRoot(freqData: RootFrequencyData): string {
 // per color theme, see lib/theme/colorThemes.ts) so the caution signal
 // stays recognizable no matter which palette is active.
 const HEURISTIC_AMBER = {
-    dark: { fg: "#fcd34d", border: "rgba(252, 211, 77, 0.55)", bg: "rgba(217, 119, 6, 0.16)" },
-    light: { fg: "#92400e", border: "rgba(180, 83, 9, 0.5)", bg: "rgba(245, 158, 11, 0.14)" },
+    dark: { fg: "#f0b074", border: "rgba(232, 146, 74, 0.55)", bg: "rgba(232, 146, 74, 0.12)" },
+    light: { fg: "#92400e", border: "rgba(180, 83, 9, 0.5)", bg: "rgba(180, 83, 9, 0.1)" },
 } as const;
 
 export default function CollocationNetworkGraph({
@@ -286,12 +287,12 @@ export default function CollocationNetworkGraph({
     );
     const canvasSurface = useMemo(() => {
         const base = d3.hsl(themeColors.background);
+        // Barely lifted at the centre: a 16% lift read as a teal glow behind
+        // the whole graph, the old design's.
         const inner = base.copy();
-        inner.l = Math.min(0.96, base.l + (theme === "dark" ? 0.16 : 0.08));
-        inner.s = Math.min(1, base.s + 0.08);
+        inner.l = Math.min(0.96, base.l + (theme === "dark" ? 0.035 : 0.02));
         const mid = base.copy();
-        mid.l = Math.min(0.92, base.l + (theme === "dark" ? 0.07 : 0.04));
-        mid.s = Math.min(1, base.s + 0.04);
+        mid.l = Math.min(0.92, base.l + (theme === "dark" ? 0.015 : 0.01));
         const outer = base.copy();
         outer.l = Math.max(0.03, base.l - (theme === "dark" ? 0.03 : 0.01));
         outer.s = Math.max(0.05, base.s - 0.03);

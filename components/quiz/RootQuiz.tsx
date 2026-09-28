@@ -178,9 +178,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
             margin: 0 auto;
             border: 1px solid rgba(17, 24, 39, 0.08);
             border-radius: 24px;
-            background:
-              linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(239, 244, 251, 0.74)),
-              radial-gradient(circle at top right, color-mix(in srgb, var(--accent-3), white 78%), transparent 42%);
+            background: var(--panel);
           }
           .root-quiz-complete::before {
             content: "";
@@ -254,16 +252,14 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
             background: color-mix(in srgb, var(--accent), black 12%);
           }
           :global([data-theme="dark"] .root-quiz-complete) {
-            background:
-              linear-gradient(180deg, rgba(24, 30, 38, 0.92), rgba(17, 22, 29, 0.9)),
-              radial-gradient(circle at top right, color-mix(in srgb, var(--accent-3), transparent 82%), transparent 42%);
+            background: var(--bg-1);
             border-color: rgba(255, 255, 255, 0.08);
           }
           :global([data-theme="dark"] .root-quiz-complete-badge) {
-            color: rgba(248, 250, 252, 0.94);
+            color: var(--ink);
           }
           :global([data-theme="dark"] .root-quiz-complete-title) {
-            color: rgba(248, 250, 252, 0.98);
+            color: var(--ink);
           }
           :global([data-theme="dark"] .root-quiz-complete-root) {
             color: rgba(226, 232, 240, 0.72);
@@ -304,7 +300,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
             border-color: rgba(255, 255, 255, 0.1);
           }
           :global([data-theme="dark"] .quiz-empty-title) {
-            color: rgba(248, 250, 252, 0.96);
+            color: var(--ink);
           }
           :global([data-theme="dark"] .quiz-empty-copy) {
             color: rgba(226, 232, 240, 0.76);
@@ -383,7 +379,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
           height: 11px;
           border-radius: 50%;
           border: none;
-          background: rgba(148, 163, 184, 0.35);
+          background: color-mix(in srgb, var(--ink) 25%, transparent);
           padding: 0;
           cursor: pointer;
           transition: background 0.2s, transform 0.2s ease;
@@ -393,7 +389,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
           transform: scale(1.15);
           box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent), transparent 85%);
         }
-        .root-quiz-dot.done { background: #22c55e; }
+        .root-quiz-dot.done { background: var(--ui-success-fg); }
         .root-quiz-card-frame {
           touch-action: pan-y;
         }
@@ -407,7 +403,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
         .root-quiz-nav-btn {
           min-width: 128px;
           padding: 0.78rem 1rem;
-          border: 1px solid rgba(148, 163, 184, 0.18);
+          border: 1px solid var(--line);
           border-radius: 999px;
           background: rgba(255, 255, 255, 0.04);
           color: var(--ink);
@@ -452,7 +448,7 @@ export default function RootQuiz({ corpusData, root }: RootQuizProps) {
         :global([data-theme="dark"] .root-quiz-nav-btn) {
           background: rgba(255, 255, 255, 0.03);
           border-color: rgba(255, 255, 255, 0.08);
-          color: rgba(248, 250, 252, 0.94);
+          color: var(--ink);
         }
         :global([data-theme="dark"] .root-quiz-nav-hint) {
           color: rgba(226, 232, 240, 0.72);

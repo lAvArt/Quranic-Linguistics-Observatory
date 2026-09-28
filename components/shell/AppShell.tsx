@@ -70,6 +70,8 @@ function AppShellContent({ initialCorpusData, initialThemePreference }: AppShell
   // Expanded by default so the zoom controls + legend are always visible in a
   // fixed, predictable dock (top-anchored, grows downward). Collapsible on demand.
   const [isLeftPanelCollapsed, setIsLeftPanelCollapsed] = useState(false);
+  // The dock collapses on desktop only; a phone shows the panel as a sheet.
+  const dockCollapsed = isLeftPanelCollapsed && !c.isMobileViewport;
 
   // Hydrate the collapsed state from localStorage once mounted. Starting
   // from the `false` default above (rather than a lazy useState initializer
@@ -105,6 +107,9 @@ function AppShellContent({ initialCorpusData, initialThemePreference }: AppShell
 
   // Edge-swipe gestures (touch): swipe in from the left edge to reveal the legend,
   // from the right edge to reveal the inspector; swipe back over a panel to dismiss.
+  // Desktop-layout touch screens only. On a phone both panels are sheets that
+  // rise from the bottom, so a sideways swipe opening one read as backwards —
+  // and a swipe from the screen edge is the browser's own back gesture there.
   const handleOpenLeft = useCallback(() => setIsLeftPanelCollapsed(false), []);
   const handleCloseLeft = useCallback(() => setIsLeftPanelCollapsed(true), []);
   const handleOpenRight = useCallback(() => c.setIsSidebarOpen(true), [c.setIsSidebarOpen]);
@@ -128,6 +133,7 @@ function AppShellContent({ initialCorpusData, initialThemePreference }: AppShell
     closeLeft: handleCloseLeft,
     openRight: handleOpenRight,
     closeRight: handleCloseRight,
+    enabled: !c.isMobileViewport,
   });
 
   // Deep-link hydration: ?viz=&surah=&ayah=&root=&lemma=&token= (e.g. from
@@ -197,11 +203,10 @@ function AppShellContent({ initialCorpusData, initialThemePreference }: AppShell
       },
     });
     if (calmEntry && c.isMobileViewport) {
-      // Mobile: chrome-light first contact — spine-only dock (not persisted, see
-      // skipNextDockPersistRef); the drawer stays closed (its tools live in the
-      // floating MobileVizBar pill instead).
-      skipNextDockPersistRef.current = true;
-      setIsLeftPanelCollapsed(true);
+      // Mobile: chrome-light first contact — both sheets stay closed until
+      // the MobileVizBar opens them. The DOCK's collapsed state is a desktop
+      // notion and is left alone: collapsing it here used to make the legend
+      // sheet open invisible (slid off-screen) from the first visit on.
     } else if (calmEntry) {
       // Desktop: land with BOTH side menus open so the full breakdown (left
       // legend/controls + right inspector) is visible immediately.
@@ -273,14 +278,18 @@ function AppShellContent({ initialCorpusData, initialThemePreference }: AppShell
             collapsing it just shrinks its width to 0 inside the dock. */}
         {(!c.isMobileViewport || c.isLeftSidebarOpen) && (
           <aside
-            className={`viz-sidebar-stack ${isLeftPanelCollapsed ? "collapsed" : ""}`}
-            aria-hidden={isLeftPanelCollapsed || undefined}
+            className={`viz-sidebar-stack ${dockCollapsed ? "collapsed" : ""}`}
+            aria-hidden={dockCollapsed || undefined}
           >
             <div id="viz-sidebar-portal" className="viz-sidebar-content" />
             <button
               type="button"
               className="viz-left-collapse"
-              onClick={() => setIsLeftPanelCollapsed(true)}
+              // On a phone this panel is a sheet the MobileVizBar opens, so
+              // hiding it closes the sheet — collapsing the (desktop) dock
+              // instead left the sheet mounted but slid away, and the bar's
+              // button then reopened nothing.
+              onClick={() => (c.isMobileViewport ? vizControl.setLeftSidebarOpen(false) : setIsLeftPanelCollapsed(true))}
               aria-label={t("overlay.collapsePanel")}
               title={t("overlay.collapsePanel")}
             >
