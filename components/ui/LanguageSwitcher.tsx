@@ -12,8 +12,14 @@ export default function LanguageSwitcher() {
 
     const toggleLocale = (newLocale: 'ar' | 'en') => {
         if (newLocale === locale) return;
+        // Keep where the reader is. The explore view lives on "/" plus its
+        // query (?viz=…&surah=…&root=…), so switching with the bare pathname
+        // dropped the query and landed on the home page. Read the query from
+        // window.location, not useSearchParams: the shell and the viz modes
+        // keep it current with history.replaceState.
+        const { search, hash } = window.location;
         startTransition(() => {
-            router.replace(pathname, { locale: newLocale });
+            router.replace(`${pathname}${search}${hash}`, { locale: newLocale });
         });
     };
 

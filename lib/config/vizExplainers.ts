@@ -68,9 +68,9 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
   "corpus-architecture": {
     summaryKey: "corpus-architecture.summary",
     legend: [
-      { color: "var(--accent-2)", shape: "rect", labelKey: "corpus-architecture.legend.juz" },
-      { color: "var(--accent)", shape: "rect", labelKey: "corpus-architecture.legend.surah" },
-      { color: CATEGORY_COLORS.preposition, shape: "circle", labelKey: "corpus-architecture.legend.ayahGroup" },
+      { color: "var(--viz-cat-makki)", shape: "arc", labelKey: "corpus-architecture.legend.makki" },
+      { color: "var(--viz-cat-madani)", shape: "arc", labelKey: "corpus-architecture.legend.madani" },
+      { color: "var(--ink)", shape: "circle", labelKey: "corpus-architecture.legend.root" },
     ],
     hintKeys: [
       "corpus-architecture.hint.expand",

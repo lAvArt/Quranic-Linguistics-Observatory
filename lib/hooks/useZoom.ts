@@ -9,8 +9,12 @@ interface ZoomOptions {
     initialScale?: number;
     /** Extra dependency to re-trigger zoom setup (e.g. set to true once the SVG is mounted). */
     ready?: unknown;
-    onZoom?: (transform: d3.ZoomTransform) => void;
+    /** Every tick. `event` is d3's zoom event (its `sourceEvent` is null for a programmatic fit). */
+    onZoom?: (transform: d3.ZoomTransform, event?: d3.D3ZoomEvent<SVGSVGElement, unknown>) => void;
     onZoomEnd?: (transform: d3.ZoomTransform) => void;
+    /** d3's double-click/double-tap zoom. Off for a view whose clicks toggle
+     *  something, where a double click would toggle it twice. */
+    doubleClickZoom?: boolean;
 }
 
 export function useZoom<SVGType extends SVGSVGElement>({
@@ -20,6 +24,7 @@ export function useZoom<SVGType extends SVGSVGElement>({
     ready,
     onZoom,
     onZoomEnd,
+    doubleClickZoom = true,
 }: ZoomOptions = {}) {
     const svgRef = useRef<SVGType>(null);
     const gRef = useRef<SVGGElement>(null);
@@ -43,7 +48,7 @@ export function useZoom<SVGType extends SVGSVGElement>({
             .scaleExtent([minScale, maxScale])
             .on("zoom", (event) => {
                 d3.select(gRef.current).attr("transform", event.transform);
-                onZoomRef.current?.(event.transform);
+                onZoomRef.current?.(event.transform, event);
             });
 
         zoomInstanceRef.current = zoom;
@@ -54,6 +59,7 @@ export function useZoom<SVGType extends SVGSVGElement>({
 
         const svgSelection = d3.select(svgRef.current);
         svgSelection.call(zoom);
+        if (!doubleClickZoom) svgSelection.on("dblclick.zoom", null);
 
         // Set initial zoom
         svgSelection.call(
@@ -65,7 +71,7 @@ export function useZoom<SVGType extends SVGSVGElement>({
         return () => {
             svgSelection.on(".zoom", null);
         };
-    }, [minScale, maxScale, initialScale, ready]);
+    }, [minScale, maxScale, initialScale, ready, doubleClickZoom]);
 
     // Camera transitions consult reduced-motion AT THE SOURCE (durations
     // collapse to 0), so every visualization built on this hook honors the

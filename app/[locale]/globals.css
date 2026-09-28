@@ -2712,34 +2712,206 @@ button.site-footer-link {
   overflow: auto;
 }
 
-/* Corpus Architecture Map: staggered reveal as the corpus streams in
-   batches (see docs/VIZ_ARCHITECTURE.md, "Corpus data streams in").
-   `.corpus-arch-fade` is a plain value-change transition for elements that
-   already exist and simply change opacity (a surah dot brightening once
-   its batch lands, or any node/link dimming on hover). `.corpus-arch-reveal`
-   is a mount-time entrance for elements that don't exist until their
-   surah's root data arrives (root nodes/links) — plain CSS transitions
-   can't animate a freshly-mounted element (no "previous value" to ease
-   from), so this uses an `animation` instead. The keyframe only sets the
-   START state; the omitted 100% falls back to the element's own live
-   opacity attribute, so hover/focus dimming keeps working the instant the
-   entrance finishes (`backwards` fill only holds the 0% state during the
-   staggered delay, never the end state — it does not linger as
-   `forwards` would). Both durations collapse under prefers-reduced-motion
-   via the global rule above; the stagger delay itself is zeroed in JS
-   (motionSafeStagger) before it ever reaches these classes. */
-.corpus-arch-fade {
-  transition: opacity 220ms ease-out;
+/* Radial Surah: the invisible hit paths are off while a pan or zoom runs
+   (RadialSuraMap sets .is-moving); their non-scaling strokes were rebuilt
+   on every frame of the gesture. */
+.radial-sura-map.is-moving .rs-hit {
+  display: none;
 }
 
-@keyframes corpus-arch-reveal {
+/* Quran structure map (components/visualisations/CorpusArchitectureMap.tsx).
+   Geometry is in world units (px at zoom 1). Label text keeps a constant
+   screen size: `--sm-u` is 1/zoom, written on the label group on every zoom
+   frame, and every size below that should not grow with the zoom multiplies
+   by it. The centre text is part of the drawing and scales with it, but
+   never below a legible size on screen (the max() floors). */
+.structure-map {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, var(--bg-1) 0%, var(--bg-0) 72%);
+}
+
+.structure-map .viz-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  display: block;
+}
+
+.structure-map .viz-canvas:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sm-label {
+  fill: var(--ink);
+  font-size: calc(11px * var(--sm-u, 1));
+  paint-order: stroke;
+  stroke: var(--bg-0);
+  stroke-width: calc(3px * var(--sm-u, 1));
+  stroke-linejoin: round;
+  opacity: 0.82;
+}
+
+.sm-label.is-arabic {
+  font-family: var(--font-arabic, "Amiri"), serif;
+  font-size: calc(13px * var(--sm-u, 1));
+}
+
+.sm-label--root {
+  font-size: calc(15px * var(--sm-u, 1));
+  opacity: 0.95;
+}
+
+.sm-label--tip {
+  fill: var(--ink-secondary, var(--ink));
+}
+
+.sm-label.is-heavy {
+  font-weight: 700;
+  opacity: 1;
+}
+
+.sm-label.is-strong {
+  fill: var(--selection);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.sm-labels {
+  animation: sm-fade-in 180ms ease-out;
+}
+
+.sm-centre-eyebrow {
+  fill: var(--ink-muted);
+  font-size: max(20px, calc(9px * var(--sm-u, 1)));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sm-centre-title {
+  fill: var(--ink);
+  font-size: max(54px, calc(18px * var(--sm-u, 1)));
+  font-weight: 600;
+}
+
+.sm-centre-arabic {
+  fill: var(--accent);
+  font-size: max(44px, calc(16px * var(--sm-u, 1)));
+  font-family: var(--font-arabic, "Amiri"), serif;
+}
+
+.sm-centre-root {
+  fill: var(--ink);
+  font-size: max(118px, calc(34px * var(--sm-u, 1)));
+  font-family: var(--font-arabic, "Amiri"), serif;
+}
+
+.sm-centre-sub {
+  fill: var(--ink-secondary, var(--ink));
+  font-size: max(22px, calc(10px * var(--sm-u, 1)));
+}
+
+.sm-centre-hint {
+  fill: var(--ink-muted);
+  font-size: max(17px, calc(9px * var(--sm-u, 1)));
+  letter-spacing: 0.04em;
+}
+
+/* Content that appears once the ring has settled fades in, rather than
+   popping, when a reading changes. */
+.sm-enter {
+  animation: sm-fade-in 320ms ease-out;
+}
+
+@keyframes sm-fade-in {
   from {
     opacity: 0;
   }
 }
 
-.corpus-arch-reveal {
-  animation: corpus-arch-reveal 220ms ease-out backwards;
+.sm-tooltip {
+  left: 0;
+  top: 0;
+  margin-top: 0;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+  will-change: transform;
+}
+
+.sm-tip-ar {
+  font-weight: 400;
+  opacity: 0.75;
+  margin-inline-start: 0.35em;
+}
+
+.sm-tip-root {
+  font-size: 1.6rem;
+  line-height: 1.3;
+}
+
+.sm-tip-hint {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.sm-panel-note {
+  margin-top: 8px;
+  font-size: 0.72em;
+  opacity: 0.6;
+  line-height: 1.6;
+}
+
+.sm-panel-more {
+  display: block;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.sm-ayah-text {
+  margin-top: 0.5rem;
+  font-size: 1.3rem;
+  line-height: 1.6;
+  text-align: right;
+  direction: rtl;
+  width: 100%;
+  color: var(--ink);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.sm-legend-row {
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 0.75em;
+}
+
+.sm-legend-arc {
+  display: inline-block;
+  width: 14px;
+  height: 5px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+.sm-legend-bar {
+  display: inline-block;
+  width: 4px;
+  height: 12px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--viz-cat-makki) 45%, transparent);
+  flex-shrink: 0;
+}
+
+.sm-legend-tick {
+  display: inline-block;
+  width: 4px;
+  height: 9px;
+  background: var(--selection);
+  flex-shrink: 0;
 }
 
 @media (max-width: 1000px) {

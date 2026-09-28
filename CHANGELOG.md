@@ -8,6 +8,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Added
 
+- **The Quran Structure Map, rebuilt.** The 114 surahs as a ring — teal arcs for
+  Makki, amber for Madani — with each surah's length in words as a bar pointing
+  inward and its five commonest roots stacked outward. Click a surah and the
+  ring opens onto it: every one of its roots, the most frequent at the centre
+  of the sector (Al-Baqarah's 585 fit without a single overlap). Pick a root and
+  each ayah that holds it stacks outward from its surah, labelled with the
+  surah and its count; hovering a root marks every surah that holds it just
+  outside the ring. Labels never overlap and keep their size on screen: all 114
+  surah names at the fitted view, more roots as you zoom in, and numbers on a
+  phone until the names fit. The map draws from the concordance payload, so it
+  is complete as soon as that file arrives rather than after the whole corpus
+  has streamed in, with the same counts as the Concordance Rings. Hover reads
+  out any surah, root or ayah; the centre or Esc returns to the whole Quran.
 - Zoom and touch for the Concordance Rings: pinch, scroll or double-tap to
   zoom (to 8×), drag to pan, **Full view** to return, `+`/`−`/`0` from the
   keyboard. On touch, a tap reads out an ayah and a second tap on the same ring
@@ -40,6 +53,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Fixed
 
+- Switching between عربي and EN kept the page but dropped its query, so the
+  explore view (`?viz=…&surah=…&root=…`) landed back on the home page. The
+  switch now keeps the query and the hash.
+- Radial Surah: every hover re-rendered the whole drawing (about 3,000
+  elements); now the drawing is split into layers that only a deliberate act
+  redraws, and hover paints a small overlay (the component's share of a
+  profiled hover sweep, 4× CPU: 11.5 s → 0.6 s). A streamed batch for another
+  surah no longer rebuilds the one on screen, and the draw-in animation no
+  longer replays — remounting every arc — on the first hover. Zooming a long
+  surah redrew hundreds of invisible hit targets and a gradient per arc on
+  every frame (8.3 s → 1.5 s of rendering for the same zoom burst); the web is
+  now two solid tones. Zoomed into a long surah, the web draws one arc per pair
+  of ayahs, commonest roots first, instead of thousands of overlapping
+  duplicates. The centre label stays legible when the ring is fitted out, and
+  the legend's connection swatch is no longer blank.
+- Quran Structure Map (rebuilt, above): zooming with a root selected
+  re-rendered all ~8,500 nodes every 120 ms (component time in a profiled zoom
+  burst: 31.5 s → 0.3 s; the map now has under 1,000 SVG nodes); labels
+  collided and grew with the zoom; a drilled surah fanned into an unreadable
+  comet; arriving on the map opened Al-Fatihah instead of the whole Quran.
+- Hovering a word in either map tells the inspector once the pointer rests
+  (90 ms), instead of re-rendering its card for every ayah the pointer crosses.
+- `scripts/audit/viz-perf.ts` counted frames and long tasks two to four times
+  over in every phase after the first (each phase added another frame loop and
+  observer). It now installs them once, waits for the main thread to go quiet
+  before the first gesture, and reports time to first content.
 - The full corpus now downloads once per device. The IndexedDB cache is
   invalidated by version, not after seven days; Supabase pages load six at a
   time; and the search index — which every search box rebuilt, three times per
