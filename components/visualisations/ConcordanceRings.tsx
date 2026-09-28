@@ -937,149 +937,155 @@ export default function ConcordanceRings({ theme = "dark", highlightRoot, onRoot
   const tipX = (x: number, half: number) => Math.min(Math.max(x, half), Math.max(half, size.w - half));
 
   return (
-    <div
-      ref={stageRef}
-      className="cr-stage"
-      tabIndex={0}
-      role="group"
-      aria-roledescription={t("roleDescription")}
-      aria-label={t("stageLabel")}
-      aria-describedby="cr-keys"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={(e) => endPress(e, false)}
-      onPointerCancel={(e) => endPress(e, true)}
-      onPointerEnter={wantText}
-      onPointerLeave={(e) => {
-        // A finger lifting also "leaves"; only a mouse leaving ends hover, or
-        // the read-out a tap just opened would vanish with the tap.
-        if (e.pointerType !== "mouse") return;
-        setPointer(null);
-        setOverBin(null);
-      }}
-      onKeyDown={(e) => {
-        if (!onZoomKey(e)) onKeyDown(e);
-      }}
-      onBlur={() => setFocus(null)}
-      data-hot={pointer ? "true" : undefined}
-      data-zoomed={zoom.k > 1 ? "true" : undefined}
-      // Ticks handed to the renderer: a canvas mode's stand-in for counting SVG
-      // marks, which scripts/build-graph-images.ts waits on before a capture.
-      data-marks={ticks && rendererKind ? ticks.length / TICK_STRIDE : undefined}
-    >
-      {/* Everything a gesture moves, so a pinch can move it as one. */}
-      <div ref={layersRef} className="cr-layers">
-        <canvas ref={backRef} className="cr-layer" aria-hidden="true" />
-        <canvas ref={tickRef} className="cr-layer" aria-hidden="true" />
-        <canvas ref={frontRef} className="cr-layer" aria-hidden="true" />
+    <>
+      <div
+        ref={stageRef}
+        className="cr-stage"
+        tabIndex={0}
+        role="group"
+        aria-roledescription={t("roleDescription")}
+        aria-label={t("stageLabel")}
+        aria-describedby="cr-keys"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(e) => endPress(e, false)}
+        onPointerCancel={(e) => endPress(e, true)}
+        onPointerEnter={wantText}
+        onPointerLeave={(e) => {
+          // A finger lifting also "leaves"; only a mouse leaving ends hover, or
+          // the read-out a tap just opened would vanish with the tap.
+          if (e.pointerType !== "mouse") return;
+          setPointer(null);
+          setOverBin(null);
+        }}
+        onKeyDown={(e) => {
+          if (!onZoomKey(e)) onKeyDown(e);
+        }}
+        onBlur={() => setFocus(null)}
+        data-hot={pointer ? "true" : undefined}
+        data-zoomed={zoom.k > 1 ? "true" : undefined}
+        // Ticks handed to the renderer: a canvas mode's stand-in for counting SVG
+        // marks, which scripts/build-graph-images.ts waits on before a capture.
+        data-marks={ticks && rendererKind ? ticks.length / TICK_STRIDE : undefined}
+      >
+        {/* Everything a gesture moves, so a pinch can move it as one. */}
+        <div ref={layersRef} className="cr-layers">
+          <canvas ref={backRef} className="cr-layer" aria-hidden="true" />
+          <canvas ref={tickRef} className="cr-layer" aria-hidden="true" />
+          <canvas ref={frontRef} className="cr-layer" aria-hidden="true" />
 
-        {roots.length ? (
-          <div ref={centreRef} className="cr-centre" style={{ left: shownFrame.cx, top: shownFrame.cy }} aria-hidden="true">
-            <p className="cr-centre-roots" dir="rtl" lang="ar">
-              {roots.map((r, i) => (
-                <span key={r.bare}>
-                  {i ? <span className="cr-sep"> · </span> : null}
-                  <span style={{ color: `var(--viz-root-${i + 1})` }}>{r.bare}</span>
-                </span>
-              ))}
-            </p>
-            <p className="cr-centre-gloss">{roots.map((r) => (r.gloss ?? r.bw).split(" / ")[0]).join(" · ")}</p>
-            <p className="cr-centre-meta">
-              <b>{nf.format(shownSurahs)}</b> {t("surahsWord")} · <b>{nf.format(selection?.totalMeetings ?? 0)}</b> {t("meetingsWord")}
+          {roots.length ? (
+            <div ref={centreRef} className="cr-centre" style={{ left: shownFrame.cx, top: shownFrame.cy }} aria-hidden="true">
+              <p className="cr-centre-roots" dir="rtl" lang="ar">
+                {roots.map((r, i) => (
+                  <span key={r.bare}>
+                    {i ? <span className="cr-sep"> · </span> : null}
+                    <span style={{ color: `var(--viz-root-${i + 1})` }}>{r.bare}</span>
+                  </span>
+                ))}
+              </p>
+              <p className="cr-centre-gloss">{roots.map((r) => (r.gloss ?? r.bw).split(" / ")[0]).join(" · ")}</p>
+              <p className="cr-centre-meta">
+                <b>{nf.format(shownSurahs)}</b> {t("surahsWord")} · <b>{nf.format(selection?.totalMeetings ?? 0)}</b> {t("meetingsWord")}
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {zoom.k > 1 ? (
+          <button
+            type="button"
+            className="cr-zoom-reset"
+            style={{ top: area.y + 10, right: size.w - area.x - area.width + 10 }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => zoomTo(IDENTITY_ZOOM)}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M8 11h6M20 20l-4-4" />
+            </svg>
+            {t("resetZoom")}
+          </button>
+        ) : null}
+
+        {tip && tipTarget && view !== "overlaid" ? (
+          <div
+            className={`cr-tip ${tipTarget.y < size.h * 0.42 ? "is-below" : ""}`}
+            style={{ left: tipX(tipTarget.x, 200), top: tipTarget.y }}
+            aria-hidden="true"
+          >
+            <header>
+              <span>
+                <b className="cr-root" dir="rtl" lang="ar">{tip.s.arabic}</b> <span className="cr-tip-en">{tip.s.name}</span>
+              </span>
+              <span className="cr-tip-ref" dir="ltr">
+                {tip.s.n}:{tipTarget.ayah}
+              </span>
+            </header>
+            {tip.hit ? (
+              <p className="cr-tip-chips">
+                {tip.hit.meeting ? <span className="cr-tip-meeting">{t("meeting")}</span> : null}
+                {roots.map((r, i) =>
+                  tip.hit!.mask & (1 << i) ? (
+                    <span key={r.bare} className="cr-chip" dir="rtl" lang="ar" style={{ color: `var(--viz-root-${i + 1})` }}>
+                      {r.bare}
+                    </span>
+                  ) : null,
+                )}
+              </p>
+            ) : null}
+            <p className="cr-tip-text" dir="rtl" lang="ar">
+              {tip.words
+                ? tip.words.map((w, i) => (
+                    <span key={i} style={tip.slots[i] >= 0 ? { color: `var(--viz-root-${tip.slots[i] + 1})` } : undefined}>
+                      {w}{" "}
+                    </span>
+                  ))
+                : "…"}
             </p>
           </div>
         ) : null}
+
+        {overBin && over && view === "overlaid" ? (
+          <div
+            className={`cr-tip ${overBin.y < size.h * 0.42 ? "is-below" : ""}`}
+            style={{ left: tipX(overBin.x, 150), top: overBin.y }}
+            aria-hidden="true"
+          >
+            <header>
+              <span>{t("atPosition", { pos: Math.round(((overBin.bin + 0.5) / over.bins.length) * 100) })}</span>
+              <span className="cr-tip-ref">{t("ayahCount", { n: over.bins[overBin.bin].refs.length })}</span>
+            </header>
+            <p className="cr-tip-refs" dir="ltr">
+              {over.bins[overBin.bin].refs.slice(0, 12).map((r) => (
+                <span key={`${r.surah}:${r.ayah}`} className={r.meeting ? "is-meeting" : undefined}>
+                  {r.surah}:{r.ayah}
+                </span>
+              ))}
+              {over.bins[overBin.bin].refs.length > 12 ? (
+                <span>{t("andMore", { n: over.bins[overBin.bin].refs.length - 12 })}</span>
+              ) : null}
+            </p>
+          </div>
+        ) : null}
+
+        <p id="cr-keys" className="cr-sr">{t("keyboardHelp")}</p>
+        <p className="cr-sr" aria-live="polite">
+          {focus && tip ? `${tip.s.name} ${tip.s.n}:${focus.ayah}${tip.hit?.meeting ? `, ${t("meeting")}` : ""}` : ""}
+        </p>
+
+        {failed ? <p className="cr-note">{t("loadFailed")}</p> : null}
+        {!payload && !failed ? <p className="cr-note">{t("loading")}</p> : null}
+        {payload && !roots.length ? <p className="cr-note">{t("noRoots")}</p> : null}
+        {payload && roots.length && layout && !layout.order.length && view !== "overlaid" ? (
+          <p className="cr-note">{t("noMatches")}</p>
+        ) : null}
       </div>
 
-      {zoom.k > 1 ? (
-        <button
-          type="button"
-          className="cr-zoom-reset"
-          style={{ top: area.y + 10, right: size.w - area.x - area.width + 10 }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => zoomTo(IDENTITY_ZOOM)}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <path d="M8 11h6M20 20l-4-4" />
-          </svg>
-          {t("resetZoom")}
-        </button>
-      ) : null}
-
-      {tip && tipTarget && view !== "overlaid" ? (
-        <div
-          className={`cr-tip ${tipTarget.y < size.h * 0.42 ? "is-below" : ""}`}
-          style={{ left: tipX(tipTarget.x, 200), top: tipTarget.y }}
-          aria-hidden="true"
-        >
-          <header>
-            <span>
-              <b className="cr-root" dir="rtl" lang="ar">{tip.s.arabic}</b> <span className="cr-tip-en">{tip.s.name}</span>
-            </span>
-            <span className="cr-tip-ref" dir="ltr">
-              {tip.s.n}:{tipTarget.ayah}
-            </span>
-          </header>
-          {tip.hit ? (
-            <p className="cr-tip-chips">
-              {tip.hit.meeting ? <span className="cr-tip-meeting">{t("meeting")}</span> : null}
-              {roots.map((r, i) =>
-                tip.hit!.mask & (1 << i) ? (
-                  <span key={r.bare} className="cr-chip" dir="rtl" lang="ar" style={{ color: `var(--viz-root-${i + 1})` }}>
-                    {r.bare}
-                  </span>
-                ) : null,
-              )}
-            </p>
-          ) : null}
-          <p className="cr-tip-text" dir="rtl" lang="ar">
-            {tip.words
-              ? tip.words.map((w, i) => (
-                  <span key={i} style={tip.slots[i] >= 0 ? { color: `var(--viz-root-${tip.slots[i] + 1})` } : undefined}>
-                    {w}{" "}
-                  </span>
-                ))
-              : "…"}
-          </p>
-        </div>
-      ) : null}
-
-      {overBin && over && view === "overlaid" ? (
-        <div
-          className={`cr-tip ${overBin.y < size.h * 0.42 ? "is-below" : ""}`}
-          style={{ left: tipX(overBin.x, 150), top: overBin.y }}
-          aria-hidden="true"
-        >
-          <header>
-            <span>{t("atPosition", { pos: Math.round(((overBin.bin + 0.5) / over.bins.length) * 100) })}</span>
-            <span className="cr-tip-ref">{t("ayahCount", { n: over.bins[overBin.bin].refs.length })}</span>
-          </header>
-          <p className="cr-tip-refs" dir="ltr">
-            {over.bins[overBin.bin].refs.slice(0, 12).map((r) => (
-              <span key={`${r.surah}:${r.ayah}`} className={r.meeting ? "is-meeting" : undefined}>
-                {r.surah}:{r.ayah}
-              </span>
-            ))}
-            {over.bins[overBin.bin].refs.length > 12 ? (
-              <span>{t("andMore", { n: over.bins[overBin.bin].refs.length - 12 })}</span>
-            ) : null}
-          </p>
-        </div>
-      ) : null}
-
-      <p id="cr-keys" className="cr-sr">{t("keyboardHelp")}</p>
-      <p className="cr-sr" aria-live="polite">
-        {focus && tip ? `${tip.s.name} ${tip.s.n}:${focus.ayah}${tip.hit?.meeting ? `, ${t("meeting")}` : ""}` : ""}
-      </p>
-
-      {failed ? <p className="cr-note">{t("loadFailed")}</p> : null}
-      {!payload && !failed ? <p className="cr-note">{t("loading")}</p> : null}
-      {payload && !roots.length ? <p className="cr-note">{t("noRoots")}</p> : null}
-      {payload && roots.length && layout && !layout.order.length && view !== "overlaid" ? (
-        <p className="cr-note">{t("noMatches")}</p>
-      ) : null}
-
+      {/* The portals are the stage's siblings, not its children: React events
+          bubble through a portal to its React parent, so inside the stage every
+          click in the side panels reached the stage's pointer handlers, which
+          captured the pointer — and the click never arrived at its button. */}
       {sidebarEl
         ? createPortal(
             <ConcordanceControls
@@ -1109,6 +1115,6 @@ export default function ConcordanceRings({ theme = "dark", highlightRoot, onRoot
       {drawerEl && selection
         ? createPortal(<ConcordanceDrawer selection={selection} selected={selectedHit} onSelect={selectRing} />, drawerEl)
         : null}
-    </div>
+    </>
   );
 }
