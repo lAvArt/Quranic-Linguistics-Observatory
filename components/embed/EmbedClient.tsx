@@ -76,10 +76,11 @@ export default function EmbedClient({ vizMode, initialRoot, initialSurah, initia
   const containerRef = useRef<HTMLDivElement>(null);
 
   /* ---- data loading ------------------------------------------------ */
-  const needsFullCorpus = vizMode === "surah-distribution" || vizMode === "corpus-architecture" || vizMode === "knowledge-graph";
-  // Concordance rings bring their own data (public/data/concordance.json) and
-  // read no corpus tokens, so they neither wait for nor trigger a corpus load.
-  const ownData = vizMode === "concordance-rings";
+  const needsFullCorpus = vizMode === "surah-distribution" || vizMode === "knowledge-graph";
+  // The concordance rings and the structure map bring their own data
+  // (public/data/concordance.json); the embed reads no corpus tokens for
+  // them, so they neither wait for nor trigger a corpus load.
+  const ownData = vizMode === "concordance-rings" || vizMode === "corpus-architecture";
 
   useEffect(() => {
     if (ownData) {
