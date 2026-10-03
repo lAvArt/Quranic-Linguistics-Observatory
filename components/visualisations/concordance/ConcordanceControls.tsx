@@ -97,7 +97,11 @@ export default function ConcordanceControls(p: Props) {
               <span className="cr-root" dir="rtl" lang="ar">{r.bare}</span>
               <span className="cr-meta">
                 {r.gloss ? <span dir="ltr">{r.gloss}</span> : null}
-                <span className="cr-count">{t("occurrences", { n: r.count })}</span>
+                {/* "412×" counts words, not ayahs: say so to screen readers and on hover. */}
+                <span className="cr-count" title={t("occurrencesLabel", { n: r.count })}>
+                  <span aria-hidden="true">{t("occurrences", { n: r.count })}</span>
+                  <span className="cr-sr">{t("occurrencesLabel", { n: r.count })}</span>
+                </span>
               </span>
               <button type="button" className="cr-x" aria-label={t("removeRoot", { root: r.bare })} onClick={() => p.onRemoveRoot(i)}>
                 ×
