@@ -261,6 +261,7 @@ export const VIZ_EXPLAINERS: Record<VisualizationMode, VizExplainer> = {
       "concordance-rings.read.ticks",
       "concordance-rings.read.threads",
       "concordance-rings.read.centre",
+      "concordance-rings.read.numbers",
       "concordance-rings.read.caveat",
     ],
     figure: "concordance-anatomy",

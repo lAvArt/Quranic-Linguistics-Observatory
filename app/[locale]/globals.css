@@ -7709,6 +7709,22 @@ button.site-footer-link {
   text-underline-offset: 3px;
 }
 .cr-drawer-link:hover { color: var(--accent); }
+.cr-drawer-h--next { margin-block-start: 14px; }
+/* Corpus-wide numbers above the meetings list. Numbers line up at the end of
+   their column (the right in English, the left in Arabic). */
+.cr-stats { inline-size: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.cr-stats caption { margin-block-end: 6px; text-align: start; }
+.cr-stats th,
+.cr-stats td { padding-block: 4px; padding-inline: 8px 0; text-align: end; white-space: nowrap; }
+.cr-stats :is(th, td):first-child { padding-inline-start: 0; text-align: start; }
+.cr-stats thead th { font-weight: 500; color: var(--ink-muted); border-block-end: 1px solid var(--line); }
+.cr-stats tbody th { font-weight: 400; }
+.cr-stats tbody td { color: var(--ink-secondary); }
+.cr-stats tfoot td { text-align: start; white-space: normal; color: var(--ink-secondary); }
+.cr-stats tfoot tr:first-child td { padding-block-start: 7px; border-block-start: 1px solid var(--line); }
+.cr-stats-root { display: inline-flex; align-items: center; gap: 6px; vertical-align: middle; }
+.cr-stats .cr-root { font-size: 15px; }
+.cr-stats-note { margin: 8px 0 0; font-size: 11px; line-height: 1.45; color: var(--ink-muted); }
 .cr-meetings { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-block-size: 46vh; overflow-y: auto; }
 /* A row is number · name · meeting ayahs on one line while they fit; a long
    list of ayahs wraps onto its own line, end-aligned, rather than squeezing

@@ -6,6 +6,7 @@ import {
   orderRings,
   selectConcordance,
   suggestRoots,
+  summarizeConcordance,
   type ConcordancePayload,
 } from "@/lib/corpus/concordanceClient";
 
@@ -140,6 +141,42 @@ describe("concordance rings — corpus query layer", () => {
     for (let i = 1; i < byPrefix.length; i++) {
       expect(byPrefix[i - 1].count).toBeGreaterThanOrEqual(byPrefix[i].count);
     }
+  });
+
+  it("summarises how far each root and each meeting reaches", () => {
+    const idx = pick("خلق", "سمو", "ارض");
+    const sel = selectConcordance(payload, idx, "ayah");
+    const sum = summarizeConcordance(sel);
+
+    // Together = the rings' own meeting count, under the one-ayah rule.
+    expect(sum.together.ayahs).toBe(sel.totalMeetings);
+    expect(sum.together.surahs).toBe(sel.qualifying.length);
+    // All present in a surah = the one-surah rule's qualifying count.
+    expect(sum.allPresentSurahs).toBe(selectConcordance(payload, idx, "surah").qualifying.length);
+
+    // Each root counted on its own matches a one-root selection.
+    sum.perRoot.forEach((spread, i) => {
+      const solo = selectConcordance(payload, [idx[i]], "ayah");
+      expect(spread.ayahs).toBe(solo.totalMeetings);
+      expect(spread.surahs).toBe(solo.qualifying.length);
+      // Ayahs, not words: never more ayahs than the root has words.
+      expect(spread.ayahs).toBeLessThanOrEqual(sel.roots[i].count);
+    });
+
+    // Each pair matches a two-root selection, and contains every triple meeting.
+    expect(sum.pairs).toHaveLength(3);
+    for (const p of sum.pairs) {
+      const duo = selectConcordance(payload, [idx[p.a], idx[p.b]], "ayah");
+      expect(p.ayahs).toBe(duo.totalMeetings);
+      expect(p.surahs).toBe(duo.qualifying.length);
+      expect(p.ayahs).toBeGreaterThanOrEqual(sum.together.ayahs);
+    }
+  });
+
+  it("leaves pairs out below three roots and counts nothing with none", () => {
+    expect(summarizeConcordance(selectConcordance(payload, pick("غفر", "رحم"))).pairs).toHaveLength(0);
+    const empty = summarizeConcordance(selectConcordance(payload, []));
+    expect(empty).toEqual({ perRoot: [], together: { ayahs: 0, surahs: 0 }, allPresentSurahs: 0, pairs: [] });
   });
 
   it("orders rings innermost first for each ordering", () => {
