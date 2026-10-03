@@ -1119,6 +1119,7 @@
             "rootPlaceholder": "Add a root — Arabic, Buckwalter or meaning",
             "removeRoot": "Remove {root}",
             "occurrences": "{n}×",
+            "occurrencesLabel": "{n, plural, one {# word} other {# words}}",
             "noRoots": "Choose up to three roots to light the rings.",
             "noMatches": "No surah has all of these roots under the current rule.",
             "presetsLabel": "Recurring phrases",
@@ -1176,10 +1177,21 @@
                 "madinah": "Madani"
             },
             "closeCard": "Close",
-            "inAyahs": "in {n, plural, one {# ayah} other {# ayahs}}",
+            "inAyahs": "in {n} of {m, plural, one {# ayah} other {# ayahs}}",
             "allMeetIn": "all meet in {count, plural, one {ayah} other {ayahs}} {ayahs}",
             "neverMeet": "never all in one ayah",
-            "openRadial": "Open this surah's radial ↗"
+            "openRadial": "Open this surah's radial ↗",
+            "statsCaption": "Across the Quran",
+            "statsRoot": "Root",
+            "statsWords": "Words",
+            "statsAyahs": "Ayahs",
+            "statsSurahs": "Surahs",
+            "statsShared": "Shared",
+            "statsTogether": "Together: {ayahs, plural, one {# ayah} other {# ayahs}} in {surahs, plural, one {# surah} other {# surahs}}",
+            "statsAllPresent": "All present: {surahs, plural, one {# surah} other {# surahs}}",
+            "statsPair": "{ayahs, plural, one {# ayah} other {# ayahs}} in {surahs, plural, one {# surah} other {# surahs}}",
+            "statsNote": "Words count every occurrence of a root; ayahs and surahs count each place once, however often the root recurs there.",
+            "statsSharedNote": "Shared: the part of a root's ayahs where all the roots meet. All present: surahs where each root occurs somewhere, not necessarily in one ayah."
         }
     },
     "DisplaySettings": {
@@ -1608,6 +1620,7 @@
                 "ticks": "Each tick is one ayah, taller the more words it has. It lights in a root's colour where that root occurs, and in the meeting colour where every chosen root shares the ayah.",
                 "threads": "Threads join each meeting to the nearest meeting on the next ring out, so meetings at the same point line up. The bars just inside the scale count the meetings at each point, across every ring.",
                 "centre": "The centre names the roots and counts the surahs where they meet, and the meetings in all.",
+                "numbers": "With no ring open, the details panel counts how far each root reaches: its words, and the ayahs and surahs that hold it. With two or three roots it adds how many ayahs and surahs they share, and with three, each pair's own meetings.",
                 "caveat": "Positions count ayahs, not words. A meeting means the roots share an ayah, not that the ayah links them in meaning: open it and read."
             },
             "hint": {
