@@ -237,6 +237,68 @@ export function selectConcordance(
   };
 }
 
+/** How far one root, or one pair of roots together, reaches across the corpus. */
+export interface Spread {
+  ayahs: number;
+  surahs: number;
+}
+
+export interface ConcordanceSummary {
+  /** Per selected root, in slot order: the ayahs and surahs that hold it. */
+  perRoot: Spread[];
+  /** Ayahs holding every selected root, and the surahs those ayahs fall in. */
+  together: Spread;
+  /** Surahs where every root occurs somewhere, not necessarily in one ayah. */
+  allPresentSurahs: number;
+  /**
+   * With three roots, each pair's own meetings — where two of them share an
+   * ayah whether or not the third is there. Empty for fewer than three, where
+   * the only pair is `together`.
+   */
+  pairs: (Spread & { a: number; b: number })[];
+}
+
+/**
+ * The corpus-wide numbers behind a selection, for the details panel.
+ *
+ * Counted from both rules at once rather than from `qualifying`, so the panel
+ * can set "meet in one ayah" beside "all present in one surah" without the
+ * reader flipping the toggle. Ayahs, not words, throughout: a root used twice
+ * in one ayah is one ayah here, matching the surah card.
+ */
+export function summarizeConcordance(selection: ConcordanceSelection): ConcordanceSummary {
+  const k = selection.roots.length;
+  const perRoot: Spread[] = Array.from({ length: k }, () => ({ ayahs: 0, surahs: 0 }));
+  const together: Spread = { ayahs: 0, surahs: 0 };
+  const pairs: ConcordanceSummary["pairs"] = [];
+  if (k === 3) {
+    for (let a = 0; a < k; a++) {
+      for (let b = a + 1; b < k; b++) pairs.push({ a, b, ayahs: 0, surahs: 0 });
+    }
+  }
+  let allPresentSurahs = 0;
+
+  for (const s of selection.surahs) {
+    for (let i = 0; i < k; i++) {
+      perRoot[i].ayahs += s.perRoot[i];
+      if (s.perRoot[i] > 0) perRoot[i].surahs++;
+    }
+    if (k > 0 && s.perRoot.every((c) => c > 0)) allPresentSurahs++;
+    together.ayahs += s.meetings.length;
+    if (s.meetings.length) together.surahs++;
+
+    for (const p of pairs) {
+      const both = (1 << p.a) | (1 << p.b);
+      let n = 0;
+      for (const h of s.hits) if ((h.mask & both) === both) n++;
+      p.ayahs += n;
+      if (n) p.surahs++;
+    }
+  }
+
+  return { perRoot, together, allPresentSurahs, pairs };
+}
+
 /**
  * Ring order options from the spec. `firstMeeting` sorts by where a surah's
  * first meeting falls: at rest the first meetings trace a spiral outward, and
