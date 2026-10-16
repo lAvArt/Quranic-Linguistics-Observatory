@@ -65,14 +65,14 @@
     "docs:record-rings": "tsx scripts/record-concordance.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.131.0",
+    "@anthropic-ai/sdk": "^0.133.0",
     "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.117.2",
+    "@supabase/supabase-js": "^2.117.3",
     "@types/d3": "^7.4.3",
     "@vercel/analytics": "^2.0.1",
     "d3": "^7.9.0",
     "framer-motion": "^13.4.4",
-    "next": "^16.3.8",
+    "next": "^16.4.0",
     "next-intl": "^4.14.9",
     "react": "19.3.0",
     "react-dom": "19.3.0"
