@@ -65,7 +65,7 @@
     "docs:record-rings": "tsx scripts/record-concordance.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0",
+    "@anthropic-ai/sdk": "^1.4.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "@types/d3": "^7.4.3",
